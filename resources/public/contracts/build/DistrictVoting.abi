@@ -1,0 +1,1 @@
+[{"constant":false,"inputs":[{"name":"candidate","type":"uint16"}],"name":"vote","outputs":[],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"voter","type":"address"},{"indexed":true,"name":"candidate","type":"uint16"}],"name":"onVote","type":"event"}]

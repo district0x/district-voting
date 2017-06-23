@@ -1,0 +1,17 @@
+/target
+/classes
+/checkouts
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/.lein-*
+/.nrepl-port
+.hgignore
+.hg/
+/.idea/
+/district-voting.iml
+/district-voting-1.iml
+/resources/public/contracts/build/*.bin
+/node_modules/
+/resources/public/js/compiled/
