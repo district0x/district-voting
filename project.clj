@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[cljs-react-material-ui "0.2.43"]
                  [day8.re-frame/async-flow-fx "0.0.6"]
-                 [district0x "0.1.4"]
+                 [district0x "0.1.5"]
                  [madvas/reagent-patched "0.6.1" :exclusions [cljsjs/react cljsjs/react-dom]]
                  [medley "0.8.3"]
                  [org.clojure/clojurescript "1.9.227"]

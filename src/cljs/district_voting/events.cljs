@@ -78,7 +78,7 @@
     {:dispatch [:district0x/deploy-contract {:address-index address-index
                                              :contract-key :dnt-token
                                              :args [controller minime-token-factory]
-                                             :dispatch [:dnt-token-contract-deployed]}]}))
+                                             :on-success [:dnt-token-contract-deployed]}]}))
 
 (reg-event-fx
   :dnt-token-contract-deployed
@@ -138,7 +138,7 @@
       (.clear js/console)
       {:dispatch [:district0x/clear-smart-contracts]
        :async-flow {:first-dispatch [:district0x/load-smart-contracts]
-                    :rules [#_ {:when :seen?
+                    :rules [{:when :seen?
                              :events [:dnt-token-contract-deployed]
                              :dispatch-n [[:generate-dnt-tokens {:random? true
                                                                  :from (first my-addresses)}]
@@ -193,5 +193,5 @@
                  :fn-key :district-voting/vote
                  :fn-args [:candidate/index]
                  :form-key :form.district-voting/vote
-                 :receipt-dispatch [:district0x.snackbar/show-message "Thank you! Your vote was successfully sent"]}]}))
+                 :on-receipt [:district0x.snackbar/show-message "Thank you! Your vote was successfully sent"]}]}))
 
