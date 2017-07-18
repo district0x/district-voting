@@ -1,7 +1,7 @@
 (ns district-voting.core
   (:require
     [cljs-time.extend]
-    [cljs.spec :as s]
+    [cljs.spec.alpha :as s]
     [cljsjs.material-ui]
     [cljsjs.react-flexbox-grid]
     [cljsjs.web3]
@@ -33,7 +33,10 @@
                                  :rules [{:when :seen?
                                           :events [:district0x/smart-contracts-loaded :district0x/my-addresses-loaded]
                                           :dispatch-n [[:watch-my-dnt-balances]
-                                                       [:load-votes]]
+                                                       [:load-voters-count]]}
+                                         {:when :seen?
+                                          :events [:voters-count-loaded]
+                                          :dispatch-n [[:load-votes]]
                                           :halt? true}]}
                     :dispatch-interval {:dispatch [:load-voters-dnt-balances]
                                         :ms 300000

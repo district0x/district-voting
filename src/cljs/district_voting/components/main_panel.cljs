@@ -40,33 +40,10 @@
            :menu-item-props {:style styles/active-address-menu-item}
            :single-address-props {:style styles/active-address-single}}]]))))
 
-(defn candidate-description []
-  (let [expanded? (r/atom false)]
-    (fn [content]
-      [:div
-       [:div
-        {:style (merge
-                  {:position :relative}
-                  (when-not @expanded?
-                    {:height 100
-                     :overflow :hidden}))}
-        (when-not @expanded?
-          [:div {:style {:background "linear-gradient(to bottom,rgba(255,255,255,0),#fff)"
-                         :position :absolute
-                         :bottom 0
-                         :height 60
-                         :left 0
-                         :width "100%"
-                         :z-index 99}}])
-        content]
-       [:div
-        {:style (merge styles/text-center
-                       {:font-size "0.9em"
-                        :cursor :pointer})
-         :on-click #(swap! expanded? not)}
-        (if @expanded?
-          "Read less"
-          "Read more")]])))
+(defn link [name url]
+  [:a {:href url
+       :target :_blank}
+   name])
 
 (defn voting-panel []
   (let [votes (subscribe [:candidates-voters-dnt-total])
@@ -79,19 +56,33 @@
        {:style {:min-height 600}
         :loading? (or @loading? (:loading? @vote-form))
         :use-loader? true}
-       [:h1 {:style styles/text-center}
-        "Vote for next district"]
+       [:h1 {:style (merge styles/text-center
+                           styles/margin-bottom-gutter-less)}
+        "What should we build next?"]
        [row
+        [:div "district0x makes use of a " [link "district proposal process" "https://github.com/district0x/district-proposals"]
+         " to allow the community to determine what districts they would like to see built and deployed to the network next by the district0x team.  To signal for a district you would like to see launched, please complete the following steps:"
+         [:ul
+          [:li "Enable the MetaMask or Parity extension in your browser"]
+          [:li "Fund your MetaMask or Parity wallet with district0x Network Tokens"]
+          [:li "Click 'Vote' under the district you would like to signal for"]
+          [:li "Confirm the transaction via MetaMask or Parity extension"]]
+         [:div "Note: You may only vote for one district per address at a time. No DNT are transferred when signaling, the voting mechanism simply registers your indication to your address. As such, the entire DNT balance stored at that address would be counted towards the vote. Once DNT is transferred to a new address, the district's vote total would be lowered by a corresponding amount. Your vote can be changed at any time by voting again from the same address."]
+         ]
         (doall
-          (for [[i {:keys [:title :description]}] (medley/indexed constants/candidates)]
+          (for [[i {:keys [:title :description]}] constants/candidates]
             [:div
              {:key i
               :style {:margin-top styles/desktop-gutter}}
              [:h2
               {:style styles/margin-bottom-gutter-mini}
               title]
-             [candidate-description
-              description]
+             description
+             [:div
+              {:style styles/margin-top-gutter-less}
+              [:a {:href (str "https://github.com/district0x/district-proposals/issues/" i)
+                   :target :_blank}
+               "Read more"]]
              (when-not @loading?
                [:div
                 [ui/linear-progress

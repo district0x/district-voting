@@ -21,7 +21,7 @@
 (reg-sub
   :form.district-voting/vote
   (fn [db]
-    (:form.district-voting/vote db)))
+    (:default (:form.district-voting/vote db))))
 
 (reg-sub
   :voters-dnt-total

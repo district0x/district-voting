@@ -8,7 +8,7 @@
     [cljs-web3.eth :as web3-eth]
     [cljs-web3.personal :as web3-personal]
     [cljs-web3.utils :as web3-utils]
-    [cljs.spec :as s]
+    [cljs.spec.alpha :as s]
     [clojure.data :as data]
     [clojure.set :as set]
     [clojure.string :as string]
@@ -21,19 +21,64 @@
     [goog.string :as gstring]
     [goog.string.format]
     [medley.core :as medley]
+    [print.foo :include-macros true]
     [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx inject-cofx path trim-v after debug reg-fx console dispatch]]))
 
 (def interceptors district0x.events/interceptors)
 
 (reg-event-fx
-  :load-votes
+  :load-voters-count
   interceptors
   (fn [{:keys [db]}]
     (let [district-voting (get-instance db :district-voting)]
-      {:web3-fx.contract/events
-       {:db-path [:web3-event-listeners]
-        :events [[district-voting :on-vote {} {:from-block 0 :to-block "latest"}
-                  :district-voting/on-vote [:district0x.log/error :on-vote]]]}})))
+      {:web3-fx.contract/constant-fns
+       {:fns [[(get-instance db :district-voting)
+               :voters-count
+               [:voters-count-loaded]
+               [:district0x.log/error :load-voters-count]]]}})))
+
+(reg-event-fx
+  :voters-count-loaded
+  interceptors
+  (fn [{:keys [db]} [voters-count]]
+    {:db (assoc db :district-voting/voters-count (bn/->number voters-count))}))
+
+
+(reg-event-fx
+  :load-votes
+  interceptors
+  (fn [{:keys [db]}]
+    (let [district-voting (get-instance db :district-voting)
+          {:keys [:district-voting/voters-count]} db]
+      (merge
+        {:web3-fx.contract/constant-fns
+         {:fns
+          (for [i (range (js/Math.ceil (/ voters-count constants/load-votes-limit)))]
+            [(get-instance db :district-voting)
+             :get-voters
+             (* i constants/load-votes-limit)
+             constants/load-votes-limit
+             [:voters-loaded]
+             [:district0x.log/error :load-votes]])}}
+        {:web3-fx.contract/events
+         {:db-path [:web3-event-listeners]
+          :events [[district-voting :on-vote {} "latest"
+                    :district-voting/on-vote [:district0x.log/error :on-vote]]]}}))))
+
+
+(reg-event-fx
+  :voters-loaded
+  interceptors
+  (fn [{:keys [db]} [[voters candidates]]]
+    (let [candidates (map bn/->number candidates)]
+      {:db (-> db
+             (update :district-voting/candidates
+                     (partial reduce
+                              (fn [result [i candidate]]
+                                (update-in result [candidate :candidate/voters] conj (nth voters i))))
+                     (medley/indexed candidates))
+             (assoc :votes-loading? false))
+       :dispatch [:load-dnt-balances voters]})))
 
 (defn- include-voter [voter voters]
   (conj (set voters) voter))
@@ -52,10 +97,7 @@
                                       (let [update-fn (if (= candidate-index i) include-voter exclude-voter)]
                                         [i (update candidate :candidate/voters (partial update-fn voter))]))
                                     candidates)))
-       :dispatch [:load-dnt-balance voter]
-       :dispatch-debounce {:key :all-votes-loaded
-                           :event [:all-votes-loaded]
-                           :delay 200}})))
+       :dispatch [:load-dnt-balances [voter]]})))
 
 (reg-event-fx
   :all-votes-loaded
@@ -115,7 +157,7 @@
                       :or {gas 200000}}]]
     (let [{:keys [:web3 :my-addresses]} db
           votes (if random?
-                  (map #(vec [% (rand-int (count constants/candidates))]) my-addresses)
+                  (map #(vec [% (first (shuffle (keys constants/candidates)))]) my-addresses)
                   votes)]
       {:web3-fx.contract/state-fns
        {:web3 web3
@@ -153,14 +195,13 @@
 
 
 (reg-event-fx
-  :load-dnt-balance
+  :load-dnt-balances
   [interceptors]
-  (fn [{:keys [db]} [address]]
-    (when-not (get-in db [:balances address :dnt])
-      {:dispatch [:district0x/load-token-balances
-                  {:addresses [address]
-                   :instance (get-instance db :dnt-token)
-                   :token-code :dnt}]})))
+  (fn [{:keys [db]} [addresses]]
+    {:dispatch [:district0x/load-token-balances
+                {:addresses (remove #(get-in db [:balances % :dnt]) addresses)
+                 :instance (get-instance db :dnt-token)
+                 :token-code :dnt}]}))
 
 (reg-event-fx
   :load-voters-dnt-balances
@@ -170,7 +211,7 @@
                       (map :candidate/voters)
                       (reduce set/union))]
       {:dispatch [:district0x/load-token-balances
-                  {:addresses [addresses]
+                  {:addresses addresses
                    :instance (get-instance db :dnt-token)
                    :token-code :dnt}]})))
 
@@ -193,5 +234,5 @@
                  :fn-key :district-voting/vote
                  :fn-args [:candidate/index]
                  :form-key :form.district-voting/vote
-                 :on-receipt [:district0x.snackbar/show-message "Thank you! Your vote was successfully sent"]}]}))
+                 :on-tx-receipt [:district0x.snackbar/show-message "Thank you! Your vote was successfully processed"]}]}))
 
