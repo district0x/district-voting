@@ -35,6 +35,6 @@
                                          {id {:candidate/voters #{}}}))
 
      :form.district-voting/vote {:default {:loading? false
-                                           :gas-limit 40000
+                                           :gas-limit 100000
                                            :data {:candidate/index 1}
                                            :errors #{}}}}))
