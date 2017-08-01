@@ -93,7 +93,9 @@
                   :value (@votes i)}]
                 [:div
                  {:style styles/text-center}
-                 [:div (u/to-locale-string (@votes i) 0) " / " (u/to-locale-string @votes-total 0) " DNT"]]
+                 [:div
+                  (u/to-locale-string (@votes i) 0) " DNT ("
+                  (u/to-locale-string (* (/ (@votes i) @votes-total) 100) 2) "%)"]]
                 (let [active-address-voted? (subscribe [:active-address-voted? i])]
                   [row
                    {:end "xs"}
