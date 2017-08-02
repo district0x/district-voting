@@ -80,6 +80,7 @@
              description
              [:div
               {:style styles/margin-top-gutter-less}
+              [:div "ID: " i]
               [:a {:href (str "https://github.com/district0x/district-proposals/issues/" i)
                    :target :_blank}
                "Read more"]]
