@@ -233,6 +233,7 @@
                  :address address
                  :fn-key :district-voting/vote
                  :fn-args [:candidate/index]
+                 :tx-opts {:gas-price (web3/to-wei 4 :gwei)}
                  :form-key :form.district-voting/vote
                  :on-tx-receipt [:district0x.snackbar/show-message "Thank you! Your vote was successfully processed"]}]}))
 
