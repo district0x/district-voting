@@ -2,11 +2,12 @@
   (:require
     [cljs-react-material-ui.reagent :as ui]
     [clojure.set :as set]
-    [district-voting.pages.bittrex-fee-page :refer [bittrex-fee-page]]
-    [district-voting.pages.next-district-page :refer [next-district-page]]
+    [district-voting.pages.feedback-page]
+    [district-voting.pages.vote-page]
+    [district-voting.pages.proposals-page]
     [district-voting.styles :as styles]
     [district0x.components.active-address-select-field :refer [active-address-select-field]]
-    [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper]]
+    [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
     [district0x.utils :as u]
     [medley.core :as medley]
     [re-frame.core :refer [subscribe dispatch]]
@@ -42,40 +43,36 @@
            :menu-item-props {:style styles/active-address-menu-item}
            :single-address-props {:style styles/active-address-single}}]]))))
 
-(def subdomain->page
-  {"vote" next-district-page
-   "feedback" bittrex-fee-page})
-
 (defn main-panel []
   (let [connection-error? (subscribe [:district0x/blockchain-connection-error?])
         xs-width? (subscribe [:district0x/window-xs-width?])
-        current-subdomain (subscribe [:current-subdomain])]
+        active-page (subscribe [:district0x/active-page])]
     (fn []
-      [misc/main-panel
-       {:mui-theme styles/mui-theme}
-       [:div
-        {:style {:padding-bottom 20
-                 :overflow :hidden
-                 :position :relative
-                 :min-height "100%"}}
-        [:img {:src "./images/green-blob2.svg"
-               :style styles/blob4}]
-        [:img {:src "./images/cyan-blob.svg"
-               :style styles/blob1}]
-        [:img {:src "./images/green-blob1.svg"
-               :style styles/blob2}]
-        [:img {:src "./images/green-blobs.svg"
-               :style styles/blob3}]
-        [:img {:src "./images/blob-big-bottom.png"
-               :style styles/blob5}]
-        [ui/app-bar
-         {:show-menu-icon-button false
-          :style styles/app-bar
-          :title (r/as-element [logo])
-          :icon-element-right (r/as-element [app-bar-right-elements])}]
-        [:div {:style (merge styles/content-wrap
-                             (when @xs-width?
-                               (styles/padding-all styles/desktop-gutter-mini)))}
-         [center-layout
-          [(or (subdomain->page @current-subdomain)
-               (first (vals subdomain->page)))]]]]])))
+      (let [{:keys [:handler]} @active-page]
+        [misc/main-panel
+         {:mui-theme styles/mui-theme}
+         [:div
+          {:style {:padding-bottom 20
+                   :overflow :hidden
+                   :position :relative
+                   :min-height "100%"}}
+          [:img {:src "./images/green-blob2.svg"
+                 :style styles/blob4}]
+          [:img {:src "./images/cyan-blob.svg"
+                 :style styles/blob1}]
+          [:img {:src "./images/green-blob1.svg"
+                 :style styles/blob2}]
+          [:img {:src "./images/green-blobs.svg"
+                 :style styles/blob3}]
+          [:img {:src "./images/blob-big-bottom.png"
+                 :style styles/blob5}]
+          [ui/app-bar
+           {:show-menu-icon-button false
+            :style styles/app-bar
+            :title (r/as-element [logo])
+            :icon-element-right (r/as-element [app-bar-right-elements])}]
+          [:div {:style (merge styles/content-wrap
+                               (when @xs-width?
+                                 (styles/padding-all styles/desktop-gutter-mini)))}
+           [center-layout
+            ^{:key handler} [page handler]]]]]))))

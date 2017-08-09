@@ -5,9 +5,15 @@ contract DistrictVoting {
 
     mapping(address => uint) public votes;
     address[] public voters;
+    uint public endBlock;
+
+    function DistrictVoting(uint _endBlock) {
+        endBlock = _endBlock;
+    }
 
     function vote(uint candidate) {
         require(candidate != 0);
+        require(endBlock == 0 || block.number <= endBlock);
         if (votes[msg.sender] == 0) {
             voters.push(msg.sender);
         }

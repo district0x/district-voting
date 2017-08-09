@@ -24,11 +24,8 @@
 (s/def :form.next-district/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
 (s/def :form.bittrex-fee/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
 
-(s/def ::current-subdomain string?)
-
 (s/def ::db (s/merge :district0x.db/db
-                     (s/keys :req-un [::votings
-                                      ::current-subdomain]
+                     (s/keys :req-un [::votings]
                              :req [:form.next-district/vote
                                    :form.bittrex-fee/vote])))
 
@@ -41,23 +38,22 @@
   (merge
     district0x.db/default-db
     {:load-node-addresses? false
-     :node-url "https://mainnet.infura.io" #_"http://localhost:8549"
-     :current-subdomain (-> js/location.href
-                          cemerick.url/url
-                          :host
-                          (clojure.string/split ".")
-                          first)
+     :node-url "https://mainnet.infura.io" #_ "http://localhost:8549"
+     :active-page (u/match-current-location constants/routes)
+     :routes constants/routes
      :smart-contracts {:dnt-token {:name "District0xNetworkToken" :address "0x0abdace70d3790235af448c88547603b945604ea"}
                        :next-district {:name "DistrictVoting" :address "0xb1618a0bff4e017e1932c4f0ac93d27e4c08d17a"}
                        :bittrex-fee {:name "DistrictVoting" :address "0x2643957a7fbb444755ded8b3615fb54d648411eb"}}
 
+     :now (t/now)
      :votings {:next-district {:voting/voters-count 0
                                :voting/candidates (setup-candidates constants/next-district-candidates)
                                :loading? true}
 
                :bittrex-fee {:voting/voters-count 0
                              :voting/candidates (setup-candidates constants/bittrex-fee-candidates)
-                             :loading? true}}
+                             :loading? true
+                             :end-time (t/date-time 2017 8 12 4)}}
 
      :form.next-district/vote {:default {:loading? false
                                          :gas-limit 100000

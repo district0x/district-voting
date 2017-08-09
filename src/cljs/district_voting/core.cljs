@@ -13,8 +13,11 @@
     [district0x.subs]
     [goog.string.format]
     [madvas.re-frame.google-analytics-fx :as google-analytics-fx]
+    [print.foo :include-macros true]
     [re-frame.core :refer [dispatch dispatch-sync clear-subscription-cache!]]
-    [reagent.core :as r]))
+    [reagent.core :as r]
+    [district-voting.constants :as constants]
+    [district0x.utils :as u]))
 
 (defn mount-root []
   (s/check-asserts goog.DEBUG)
@@ -36,5 +39,7 @@
                     :dispatch-interval {:dispatch [:load-voters-dnt-balances]
                                         :ms 300000
                                         :db-path [:load-voters-dnt-balances-interval]}}}])
+  (set! (.-onhashchange js/window)
+        #(dispatch [:district0x/set-active-page (u/match-current-location constants/routes)]))
   (mount-root))
 

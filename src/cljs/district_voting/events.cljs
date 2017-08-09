@@ -14,7 +14,7 @@
     [clojure.string :as string]
     [day8.re-frame.async-flow-fx]
     [district-voting.constants :as constants]
-    [district-voting.spec-interceptors :refer [validate-db]]
+    [district0x.spec-interceptors :refer [validate-db]]
     [district0x.big-number :as bn]
     [district0x.debounce-fx]
     [district0x.events :refer [get-contract get-instance all-contracts-loaded?]]
@@ -29,15 +29,29 @@
 
 (def subdomain->initial-dispatch-n
   {"vote" [[:load-voters-count :next-district]]
-   "feedback" [[:load-voters-count :bittrex-fee]]})
+   "feedback" [[:load-voters-count :bittrex-fee]
+               [:setup-update-now-interval]]})
 
 (reg-event-fx
   :initialize
   interceptors
   (fn [{:keys [:db]}]
     {:dispatch [:watch-my-dnt-balances]
-     :dispatch-n (or (subdomain->initial-dispatch-n (:current-subdomain db))
-                     (first (vals subdomain->initial-dispatch-n)))}))
+     :dispatch-n (subdomain->initial-dispatch-n constants/current-subdomain)}))
+
+(reg-event-fx
+  :setup-update-now-interval
+  interceptors
+  (fn [{:keys [db]}]
+    {:dispatch-interval {:dispatch [:update-now]
+                         :ms 1000
+                         :db-path [:update-now-interval]}}))
+
+(reg-event-fx
+  :update-now
+  interceptors
+  (fn [{:keys [db]}]
+    {:db (assoc db :now (t/now))}))
 
 (reg-event-fx
   :load-voters-count
@@ -117,9 +131,10 @@
 (reg-event-fx
   :deploy-district-voting-contract
   interceptors
-  (fn [{:keys [db]} [{:keys [:address-index :voting-key]}]]
+  (fn [{:keys [db]} [{:keys [:address-index :voting-key :voting/end-block]}]]
     {:dispatch [:district0x/deploy-contract {:address-index address-index
                                              :contract-key voting-key
+                                             :args (when end-block [end-block])
                                              :gas 2000000}]}))
 
 (reg-event-fx

@@ -1,4 +1,5 @@
-(ns district-voting.constants)
+(ns district-voting.constants
+  (:require [cemerick.url :as url]))
 
 (defn link [name url]
   [:a {:href url
@@ -24,3 +25,15 @@
 (def bittrex-fee-candidates
   {1 {:title "Support"}
    2 {:title "Disapprove"}})
+
+(def current-subdomain (let [subdomain (-> js/location.href
+                                         url/url
+                                         :host
+                                         (clojure.string/split ".")
+                                         first)]
+                         (if (= subdomain "localhost") "vote" subdomain)))
+(def routes
+  ({"vote" ["/" [["proposals" :route.vote/proposals]
+                 [true :route.vote/home]]]
+    "feedback" ["/" [[true :route.feedback/home]]]}
+    current-subdomain))

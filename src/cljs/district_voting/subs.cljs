@@ -6,7 +6,8 @@
     [goog.string :as gstring]
     [goog.string.format]
     [medley.core :as medley]
-    [re-frame.core :refer [reg-sub]]))
+    [re-frame.core :refer [reg-sub]]
+    [district0x.utils :as u]))
 
 (reg-sub
   :votings
@@ -19,14 +20,17 @@
     (get-in db [:smart-contracts contract-key :address])))
 
 (reg-sub
-  :current-subdomain
-  (fn [db]
-    (:current-subdomain db)))
-
-(reg-sub
   :voting-loading?
   (fn [db [_ voting-key]]
     (get-in db [:votings voting-key :loading?])))
+
+(reg-sub
+  :voting-time-remaining
+  (fn [db [_ voting-key]]
+    (let [time-remaining (u/time-remaining (:now db) (get-in db [:votings voting-key :end-time]))]
+      (if (some neg? (vals time-remaining))
+        (medley/map-vals (constantly 0) time-remaining)
+        time-remaining))))
 
 (reg-sub
   :form.next-district/vote

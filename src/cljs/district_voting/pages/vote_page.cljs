@@ -1,4 +1,4 @@
-(ns district-voting.pages.next-district-page
+(ns district-voting.pages.vote-page
   (:require
     [district-voting.components.bottom-logo :refer [bottom-logo]]
     [district-voting.components.contract-info :refer [contract-info]]
@@ -6,8 +6,7 @@
     [district-voting.components.voting-bar :refer [voting-bar]]
     [district-voting.constants :as constants]
     [district-voting.styles :as styles]
-    [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper]]
-    [district0x.components.misc :as misc]
+    [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
     [re-frame.core :refer [subscribe dispatch]]))
 
 (defn link [name url]
@@ -15,7 +14,7 @@
        :target :_blank}
    name])
 
-(defn next-district-page []
+(defmethod page :route.vote/home []
   (let [votes (subscribe [:voting/candidates-voters-dnt-total :next-district])
         votes-total (subscribe [:voting/voters-dnt-total :next-district])
         loading? (subscribe [:voting-loading? :next-district])
