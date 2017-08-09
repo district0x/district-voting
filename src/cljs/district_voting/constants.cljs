@@ -5,9 +5,9 @@
        :target :_blank}
    name])
 
-(def load-votes-limit 2)
+(def load-votes-limit 30)
 
-(def candidates
+(def next-district-candidates
   {3 {:title "1Hive"
       :description [:div "The 1Hive Funding platform would offer a standardized and accountable crowdfunding dapp on top of a curation market. Similar to " [link "Patreon" "https://www.patreon.com/"] " or " [link "Kickstarter" "https://www.kickstarter.com/"] ", an individual or group could champion a project and solicit support from the community to provide funding to bring the idea to market. The platform would support both funding milestones and time-based funding release mechanisms. In addition, early contributors to a project would benefit from the projects future success, so community members have the incentive to find the best projects early and shift their support to those. The result is that quality projects should bubble up and receive the most funding and attention from the community."]}
    18 {:title "Influencer.io"
@@ -20,3 +20,7 @@
        :description "Apps and websites like Yelp are good resources to allow residents to access reviews from others in their communities on places and activities in their local city. But the centralized nature leads to flaws, with advertisements competing for space and a focus on quantity of reviews over quality. For reviewers, there is limited pay off for putting together higher quality reviews. Some may even try to branch out to their own blogs/sites but then run into other issues getting value out of their reviews. For those looking to consume reviews, they end up with long lists of low quality reviews or struggle trying to find those community experts. This is where Localview comes into the picture."}
    29 {:title "Decentraland District"
        :description [:div [link "Decentraland" "https://decentraland.org/"] " is an open source initiative to build a traversable virtual reality world. Within Decentraland, habitants can claim land as their own and build anything they wish upon it, from 3D artwork to fully immersive applications such as a VR poker room, for other inhabitants of the world to discover and enjoy. The nature of adjacency of land will lead to particular parcels becoming more desirable than others as a byproduct of their surroundings. A parcel which hosts a heavily trafficked installation will naturally enhance the discoverability of content hosted by neighboring landowners, leading to an appreciation in the inherent value of bordering plots. The Decentraland District will establish a secondary market for land ownership and rentals within the Decentraland virtual world, establishing a focal point for the exchange of parcels and providing a means of price discovery and liquidity for LAND owners."]}})
+
+(def bittrex-fee-candidates
+  {1 {:title "Support"}
+   2 {:title "Disapprove"}})

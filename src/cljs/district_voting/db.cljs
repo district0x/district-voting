@@ -9,32 +9,62 @@
     [re-frame.core :refer [dispatch]]))
 
 (s/def :candidate/voters (s/coll-of u/address?))
-#_(s/def :candidate/voters-count integer?)
 (s/def :candidate/index integer?)
-(s/def :district-voting/voters-count integer?)
+(s/def :district-voting/candidate (s/keys :opt [:candidate/voters]))
 
-(s/def :district-voting/candidate (s/keys :opt [:candidate/voters
-                                                #_:candidate/voters-count]))
+(s/def :voting/candidates (s/map-of :candidate/index :district-voting/candidate))
+(s/def :voting/voters-count integer?)
+(s/def ::voting-key keyword?)
+(s/def ::loading? boolean?)
 
-(s/def :district-voting/candidates (s/map-of :candidate/index :district-voting/candidate))
+(s/def ::votings (s/map-of ::voting-key (s/keys :req-un [::loading?]
+                                                :req [:voting/voters-count
+                                                      :voting/candidates])))
 
-(s/def :form.district-voting/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
+(s/def :form.next-district/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
+(s/def :form.bittrex-fee/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
+
+(s/def ::current-subdomain string?)
+
+(s/def ::db (s/merge :district0x.db/db
+                     (s/keys :req-un [::votings
+                                      ::current-subdomain]
+                             :req [:form.next-district/vote
+                                   :form.bittrex-fee/vote])))
+
+(defn setup-candidates [candidates]
+  (into {}
+        (for [[id] candidates]
+          {id {:candidate/voters #{}}})))
 
 (def default-db
   (merge
     district0x.db/default-db
     {:load-node-addresses? false
      :node-url "https://mainnet.infura.io" #_"http://localhost:8549"
-     :smart-contracts {:district-voting {:name "DistrictVoting" :address "0xb1618a0bff4e017e1932c4f0ac93d27e4c08d17a"}
-                       :dnt-token {:name "District0xNetworkToken" :address "0x0abdace70d3790235af448c88547603b945604ea"}}
+     :current-subdomain (-> js/location.href
+                          cemerick.url/url
+                          :host
+                          (clojure.string/split ".")
+                          first)
+     :smart-contracts {:dnt-token {:name "District0xNetworkToken" :address "0x0abdace70d3790235af448c88547603b945604ea"}
+                       :next-district {:name "DistrictVoting" :address "0xb1618a0bff4e017e1932c4f0ac93d27e4c08d17a"}
+                       :bittrex-fee {:name "DistrictVoting" :address "0x2643957a7fbb444755ded8b3615fb54d648411eb"}}
 
-     :votes-loading? true
-     :district-voting/voters-count 0
-     :district-voting/candidates (into {}
-                                       (for [[id] constants/candidates]
-                                         {id {:candidate/voters #{}}}))
+     :votings {:next-district {:voting/voters-count 0
+                               :voting/candidates (setup-candidates constants/next-district-candidates)
+                               :loading? true}
 
-     :form.district-voting/vote {:default {:loading? false
-                                           :gas-limit 100000
-                                           :data {:candidate/index 1}
-                                           :errors #{}}}}))
+               :bittrex-fee {:voting/voters-count 0
+                             :voting/candidates (setup-candidates constants/bittrex-fee-candidates)
+                             :loading? true}}
+
+     :form.next-district/vote {:default {:loading? false
+                                         :gas-limit 100000
+                                         :data {:candidate/index 1}
+                                         :errors #{}}}
+
+     :form.bittrex-fee/vote {:default {:loading? false
+                                       :gas-limit 100000
+                                       :data {:candidate/index 1}
+                                       :errors #{}}}}))

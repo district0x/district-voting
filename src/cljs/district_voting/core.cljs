@@ -32,12 +32,7 @@
                    {:async-flow {:first-dispatch [:district0x/load-smart-contracts {:version "1.0.0"}]
                                  :rules [{:when :seen?
                                           :events [:district0x/smart-contracts-loaded :district0x/my-addresses-loaded]
-                                          :dispatch-n [[:watch-my-dnt-balances]
-                                                       [:load-voters-count]]}
-                                         {:when :seen?
-                                          :events [:voters-count-loaded]
-                                          :dispatch-n [[:load-votes]]
-                                          :halt? true}]}
+                                          :dispatch-n [[:initialize]]}]}
                     :dispatch-interval {:dispatch [:load-voters-dnt-balances]
                                         :ms 300000
                                         :db-path [:load-voters-dnt-balances-interval]}}}])

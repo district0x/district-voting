@@ -9,26 +9,41 @@
     [re-frame.core :refer [reg-sub]]))
 
 (reg-sub
-  :district-voting/candidates
+  :votings
   (fn [db]
-    (:district-voting/candidates db)))
+    (:votings db)))
 
 (reg-sub
-  :votes-loading?
-  (fn [db]
-    (:votes-loading? db)))
+  :contract-address
+  (fn [db [_ contract-key]]
+    (get-in db [:smart-contracts contract-key :address])))
 
 (reg-sub
-  :form.district-voting/vote
+  :current-subdomain
   (fn [db]
-    (:default (:form.district-voting/vote db))))
+    (:current-subdomain db)))
 
 (reg-sub
-  :voters-dnt-total
+  :voting-loading?
+  (fn [db [_ voting-key]]
+    (get-in db [:votings voting-key :loading?])))
+
+(reg-sub
+  :form.next-district/vote
+  (fn [db]
+    (:default (:form.next-district/vote db))))
+
+(reg-sub
+  :form.bittrex-fee/vote
+  (fn [db]
+    (:default (:form.bittrex-fee/vote db))))
+
+(reg-sub
+  :voting/voters-dnt-total
   :<- [:district0x/balances]
-  :<- [:district-voting/candidates]
-  (fn [[balances candidates]]
-    (->> (vals candidates)
+  :<- [:votings]
+  (fn [[balances votings] [_ voting-key]]
+    (->> (vals (get-in votings [voting-key :voting/candidates]))
       (reduce #(set/union %1 (:candidate/voters %2)) #{})
       (select-keys balances)
       vals
@@ -36,24 +51,24 @@
       (reduce + 0))))
 
 (reg-sub
-  :candidates-voters-dnt-total
+  :voting/candidates-voters-dnt-total
   :<- [:district0x/balances]
-  :<- [:district-voting/candidates]
-  (fn [[balances candidates] [_ candidate-index]]
+  :<- [:votings]
+  (fn [[balances votings] [_ voting-key]]
     (medley/map-vals (fn [{:keys [:candidate/voters]}]
                        (->> voters
                          (select-keys balances)
                          vals
                          (map :dnt)
                          (reduce + 0)))
-                     candidates)))
+                     (get-in votings [voting-key :voting/candidates]))))
 
 (reg-sub
-  :active-address-voted?
+  :voting/active-address-voted?
   :<- [:district0x/active-address]
-  :<- [:district-voting/candidates]
-  (fn [[active-address candidates] [_ candidate-index]]
-    (contains? (get-in candidates [candidate-index :candidate/voters])
+  :<- [:votings]
+  (fn [[active-address votings] [_ voting-key candidate-index]]
+    (contains? (get-in votings [voting-key :voting/candidates candidate-index :candidate/voters])
                active-address)))
 
 

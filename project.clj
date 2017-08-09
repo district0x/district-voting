@@ -10,7 +10,8 @@
                  [medley "0.8.3"]
                  [org.clojure/clojurescript "1.9.671"]
                  [print-foo-cljs "2.0.3"]
-                 [re-frame "0.9.4" :exclusions [reagent]]]
+                 [re-frame "0.9.4" :exclusions [reagent]]
+                 [com.cemerick/url "0.1.1"]]
 
   :plugins [[lein-auto "0.1.2"]
             [lein-cljsbuild "1.1.4"]
