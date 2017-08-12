@@ -73,6 +73,7 @@
                 :index i
                 :loading? @loading?
                 :voting-key :bittrex-fee
-                :form-key :form.bittrex-fee/vote}]]))]]
+                :form-key :form.bittrex-fee/vote
+                :voting-disabled? (every? zero? (vals @time-remaining))}]]))]]
        [:div {:style {:height 250}}]                        ; Only for styling purposes
        [bottom-logo]])))

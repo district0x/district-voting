@@ -8,7 +8,7 @@
 
 (defn voting-bar []
   (let [can-submit? (subscribe [:district0x/can-submit-into-blockchain?])]
-    (fn [{:keys [:votes-total :votes :index :loading? :voting-key :form-key]}]
+    (fn [{:keys [:votes-total :votes :index :loading? :voting-key :form-key :voting-disabled?]}]
       (when-not loading?
         [:div
          [ui/linear-progress
@@ -31,6 +31,6 @@
              {:label (if @active-address-voted?
                        "Voted"
                        "Vote")
-              :disabled (or (not @can-submit?) @active-address-voted?)
+              :disabled (or (not @can-submit?) @active-address-voted? voting-disabled?)
               :primary true
               :on-touch-tap #(dispatch [:voting/vote voting-key form-key {:candidate/index index}])}]])]))))
