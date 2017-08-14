@@ -16,3 +16,4 @@ pom.xml.asc
 /node_modules/
 /resources/public/js/compiled/
 /figwheel_server.log
+!/resources/public/contracts/build/District0xNetworkToken.bin
