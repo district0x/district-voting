@@ -20,7 +20,7 @@
 
   :min-lein-version "2.5.3"
 
-  :source-paths ["src/cljs"]
+  :source-paths ["dev"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
