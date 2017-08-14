@@ -4,7 +4,6 @@
     [district-voting.components.contract-info :refer [contract-info]]
     [district-voting.components.how-to-instructions :refer [how-to-instructions]]
     [district-voting.components.voting-bar :refer [voting-bar]]
-    [district-voting.constants :as constants]
     [district-voting.styles :as styles]
     [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
     [re-frame.core :refer [subscribe dispatch]]))
@@ -19,7 +18,8 @@
         votes-total (subscribe [:voting/voters-dnt-total :next-district])
         loading? (subscribe [:voting-loading? :next-district])
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
-        vote-form (subscribe [:form.next-district/vote])]
+        vote-form (subscribe [:form.next-district/vote])
+        candidates (subscribe [:voting/candidates :next-district])]
     (fn []
       [paper
        {:style {:min-height 600}
@@ -37,7 +37,7 @@
                          :style styles/margin-bottom-gutter-less}]
          ]
         (doall
-          (for [[i {:keys [:title :description]}] constants/next-district-candidates]
+          (for [[i {:keys [:title :description]}] @candidates]
             [:div
              {:key i
               :style {:margin-top styles/desktop-gutter}}

@@ -7,6 +7,7 @@
     [goog.string.format]
     [medley.core :as medley]
     [re-frame.core :refer [reg-sub]]
+    [district-voting.constants :as constants]
     [district0x.utils :as u]))
 
 (reg-sub
@@ -76,3 +77,7 @@
                active-address)))
 
 
+(reg-sub
+ :voting/candidates
+ (fn [[][_ voting-key]]
+   constants/next-district-candidates))
