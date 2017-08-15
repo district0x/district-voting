@@ -77,7 +77,4 @@
                active-address)))
 
 
-(reg-sub
- :voting/candidates
- (fn [[][_ voting-key]]
-   constants/next-district-candidates))
+

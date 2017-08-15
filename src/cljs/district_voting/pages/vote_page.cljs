@@ -6,6 +6,7 @@
     [district-voting.components.voting-bar :refer [voting-bar]]
     [district-voting.styles :as styles]
     [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
+    [district-voting.proposals.subs :as proposal-subs]
     [re-frame.core :refer [subscribe dispatch]]))
 
 (defn link [name url]
@@ -19,7 +20,7 @@
         loading? (subscribe [:voting-loading? :next-district])
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
         vote-form (subscribe [:form.next-district/vote])
-        candidates (subscribe [:voting/candidates :next-district])]
+        proposals (subscribe [::proposal-subs/list "district-proposals"])]
     (fn []
       [paper
        {:style {:min-height 600}
@@ -37,24 +38,24 @@
                          :style styles/margin-bottom-gutter-less}]
          ]
         (doall
-          (for [[i {:keys [:title :description]}] @candidates]
+          (for [{:keys [:number :title :body :html_url]} @proposals]
             [:div
-             {:key i
+             {:key number
               :style {:margin-top styles/desktop-gutter}}
              [:h2
               {:style styles/margin-bottom-gutter-mini}
               title]
-             description
+             body
              [:div
               {:style styles/margin-top-gutter-less}
-              [:div "ID: " i]
-              [:a {:href (str "https://github.com/district0x/district-proposals/issues/" i)
+              [:div "ID: " number]
+              [:a {:href html_url
                    :target :_blank}
                "Read more"]]
              [voting-bar
               {:votes-total @votes-total
                :votes @votes
-               :index i
+               :index number
                :loading? @loading?
                :voting-key :next-district
                :form-key :form.next-district/vote}]]))]

@@ -14,6 +14,7 @@
     [clojure.string :as string]
     [day8.re-frame.async-flow-fx]
     [district-voting.constants :as constants]
+    [district-voting.proposals.events :as proposal-events]
     [district0x.spec-interceptors :refer [validate-db]]
     [district0x.big-number :as bn]
     [district0x.debounce-fx]
@@ -28,7 +29,8 @@
 (def interceptors [trim-v (validate-db :district-voting.db/db)])
 
 (def subdomain->initial-dispatch-n
-  {"vote" [[:load-voters-count :next-district]]
+  {"vote" [[:load-voters-count :next-district]
+           [::proposal-events/load "district-proposals"]]
    "feedback" [[:load-voters-count :bittrex-fee]
                [:setup-update-now-interval]]})
 
