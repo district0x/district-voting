@@ -7,6 +7,7 @@
     [district-voting.styles :as styles]
     [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
     [district-voting.proposals.subs :as proposal-subs]
+    [markdown.core :refer [md->html]]
     [re-frame.core :refer [subscribe dispatch]]))
 
 (defn link [name url]
@@ -45,6 +46,9 @@
              [:h2
               {:style styles/margin-bottom-gutter-mini}
               title]
+             ;;TODO: This is not safe. Do we need formatting?
+             ;; [:div {:dangerouslySetInnerHTML
+             ;;        {:__html (md->html body)}}]
              body
              [:div
               {:style styles/margin-top-gutter-less}

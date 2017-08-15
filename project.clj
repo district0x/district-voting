@@ -12,7 +12,8 @@
                  [org.clojure/clojurescript "1.9.671"]
                  [print-foo-cljs "2.0.3"]
                  [re-frame "0.9.4" :exclusions [reagent]]
-                 [com.cemerick/url "0.1.1"]]
+                 [com.cemerick/url "0.1.1"]
+                 [markdown-clj "0.9.99"]]
 
   :plugins [[lein-auto "0.1.2"]
             [lein-cljsbuild "1.1.4"]

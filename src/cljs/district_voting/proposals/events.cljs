@@ -30,6 +30,8 @@
 
 (defn- project-url [project]
   "Resolve project's url by project name"
+
+  ;;XSS example https://api.github.com/repos/wambat/ateam/issues
   (str "https://api.github.com/repos/district0x/" project "/issues"))
 
 (reg-event-fx
