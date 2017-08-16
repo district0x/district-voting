@@ -10,6 +10,7 @@
     [markdown.core :refer [md->html]]
     [re-frame.core :refer [subscribe dispatch]]
     [reagent.core :as r]
+    [district0x.utils :as u]
     [cljs-react-material-ui.reagent :as ui]
     [district-voting.components.expandable-text :refer [expandable-text]]
     )
@@ -70,7 +71,6 @@
        {:style {:min-height 600}
         :loading? (or @loading? (:loading? @vote-form))
         :use-loader? true}
-       [:h1 (str "Sort " @sort-order) ]
        [:h1 {:style (merge styles/text-center
                            styles/margin-bottom-gutter-less)}
         "What should we build next?"]
@@ -106,7 +106,7 @@
               [:div "ID: " number]
               [:div "Created: " created_at]
               ;; [:div "Github upvotes: " number]
-              [:div "Votes:" dnt-votes]
+              [:div "Votes: " (u/to-locale-string dnt-votes 0)]
               [:div "Github comments: " comments]
               [:a {:href html_url
                    :target :_blank}
