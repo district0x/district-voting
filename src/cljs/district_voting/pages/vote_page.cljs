@@ -20,10 +20,30 @@
        :target :_blank}
    name])
 
-(def sort-options {:votes "DNT Votes"
-                   :gh-upvotes "Github upvotes"
-                   :gh-comments "Github comments"
-                   :latest "Latest"})
+(def sort-options {:dnt-votes {:title "DNT Votes"
+                               :reverse? true
+                               :cmp-fn :dnt-votes}
+                   ;;:upvotes "Github upvotes"
+                   :comments {:title "Github comments"
+                              :reverse? true
+                              :cmp-fn :comments}
+                   :created_at {:title "Latest"
+                                :reverse? true
+                                :cmp-fn :created_at}})
+
+(defn sort-pulldown [selected-value opts]
+  [ui/select-field
+   {:value @selected-value
+    :auto-width true
+    :on-change (fn [event idx value]
+                 (reset! selected-value (keyword value)))}
+   [ui/subheader {} "Sort by"]
+   (doall (map (fn [[k v]]
+                 ^{:key k}
+                 [ui/menu-item
+                  {:value k
+                   :key k
+                   :primary-text (:title v)}]) opts))])
 
 (defmethod page :route.vote/home []
   (let [votes (subscribe [:voting/candidates-voters-dnt-total :next-district])
@@ -31,9 +51,17 @@
         loading? (subscribe [:voting-loading? :next-district])
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
         vote-form (subscribe [:form.next-district/vote])
-        proposals (subscribe [::proposal-subs/list :next-district])
+        all-proposals (subscribe [::proposal-subs/list :next-district])
+        all-proposals-with-votes (reaction (doall (map (fn [p]
+                                                         (assoc p :dnt-votes (get @votes (:number p))))
+                                                       @all-proposals)))
         limit (r/atom 10)
-        sort-order (r/atom :votes)
+        sort-order (r/atom :dnt-votes)
+        proposals (reaction (let [sorted (sort-by (get-in sort-options
+                                                          [@sort-order :cmp-fn]) @all-proposals-with-votes)]
+                              (if (get-in sort-options [@sort-order :reverse?])
+                                (reverse sorted)
+                                sorted)))
         limited-proposals (reaction (if (pos? @limit)
                                       (take @limit @proposals)
                                       @proposals))]
@@ -42,9 +70,7 @@
        {:style {:min-height 600}
         :loading? (or @loading? (:loading? @vote-form))
         :use-loader? true}
-       [:h1 (str "Count " (count @limited-proposals)) ]
-       [:h1 (str "Votes " @votes) ]
-       [:h1 (str "Votes " @votes-total) ]
+       [:h1 (str "Sort " @sort-order) ]
        [:h1 {:style (merge styles/text-center
                            styles/margin-bottom-gutter-less)}
         "What should we build next?"]
@@ -54,10 +80,16 @@
          [how-to-instructions]
          [:div "Note: You may only vote for one district per address at a time. No DNT are transferred when signaling, the voting mechanism simply registers your indication to your address. As such, the entire DNT balance stored at that address would be counted towards the vote. Once DNT is transferred to a new address, the district's vote total would be lowered by a corresponding amount. Your vote can be changed at any time by voting again from the same address."]
          [contract-info {:contract-key :next-district
-                         :style styles/margin-bottom-gutter-less}]
-         ]
+                         :style styles/margin-bottom-gutter-less}]]
+        [sort-pulldown sort-order sort-options]
         (doall
-          (for [{:keys [:number :title :body :html_url :comments ]} @limited-proposals]
+         (for [{:keys [:number
+                       :title
+                       :body
+                       :html_url
+                       :dnt-votes
+                       :comments
+                       :created_at]} @limited-proposals]
             [:div
              {:key number
               :style {:margin-top styles/desktop-gutter}}
@@ -72,7 +104,9 @@
              [:div
               {:style styles/margin-top-gutter-less}
               [:div "ID: " number]
+              [:div "Created: " created_at]
               ;; [:div "Github upvotes: " number]
+              [:div "Votes:" dnt-votes]
               [:div "Github comments: " comments]
               [:a {:href html_url
                    :target :_blank}
