@@ -8,12 +8,22 @@
     [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
     [district-voting.proposals.subs :as proposal-subs]
     [markdown.core :refer [md->html]]
-    [re-frame.core :refer [subscribe dispatch]]))
+    [re-frame.core :refer [subscribe dispatch]]
+    [reagent.core :as r]
+    [cljs-react-material-ui.reagent :as ui]
+    [district-voting.components.expandable-text :refer [expandable-text]]
+    )
+  (:require-macros [reagent.ratom :refer [reaction]]))
 
 (defn link [name url]
   [:a {:href url
        :target :_blank}
    name])
+
+(def sort-options {:votes "DNT Votes"
+                   :gh-upvotes "Github upvotes"
+                   :gh-comments "Github comments"
+                   :latest "Latest"})
 
 (defmethod page :route.vote/home []
   (let [votes (subscribe [:voting/candidates-voters-dnt-total :next-district])
@@ -21,12 +31,18 @@
         loading? (subscribe [:voting-loading? :next-district])
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
         vote-form (subscribe [:form.next-district/vote])
-        proposals (subscribe [::proposal-subs/list "district-proposals"])]
+        proposals (subscribe [::proposal-subs/list "district-proposals"])
+        limit (r/atom 10)
+        sort-order (r/atom :votes)
+        limited-proposals (reaction (if (pos? @limit)
+                                      (take @limit @proposals)
+                                      @proposals))]
     (fn []
       [paper
        {:style {:min-height 600}
         :loading? (or @loading? (:loading? @vote-form))
         :use-loader? true}
+       [:h1 (str "Count " (count @limited-proposals)) ]
        [:h1 {:style (merge styles/text-center
                            styles/margin-bottom-gutter-less)}
         "What should we build next?"]
@@ -39,7 +55,7 @@
                          :style styles/margin-bottom-gutter-less}]
          ]
         (doall
-          (for [{:keys [:number :title :body :html_url]} @proposals]
+          (for [{:keys [:number :title :body :html_url]} @limited-proposals]
             [:div
              {:key number
               :style {:margin-top styles/desktop-gutter}}
@@ -49,7 +65,8 @@
              ;;TODO: This is not safe. Do we need formatting?
              ;; [:div {:dangerouslySetInnerHTML
              ;;        {:__html (md->html body)}}]
-             body
+             [expandable-text
+              body]
              [:div
               {:style styles/margin-top-gutter-less}
               [:div "ID: " number]
@@ -63,4 +80,10 @@
                :loading? @loading?
                :voting-key :next-district
                :form-key :form.next-district/vote}]]))]
+       (when (< (count @limited-proposals) (count @proposals))
+         [ui/flat-button
+          {:label "View all"
+           ;;:disabled (or (not @can-submit?) @active-address-voted? voting-disabled?)
+           :primary true
+           :on-touch-tap #(reset! limit 0)}])
        [bottom-logo]])))
