@@ -8,7 +8,7 @@
 
 (def load-votes-limit 30)
 
-(def next-district-candidates
+#_(def next-district-candidates
   {3 {:title "1Hive"
       :description [:div "The 1Hive Funding platform would offer a standardized and accountable crowdfunding dapp on top of a curation market. Similar to " [link "Patreon" "https://www.patreon.com/"] " or " [link "Kickstarter" "https://www.kickstarter.com/"] ", an individual or group could champion a project and solicit support from the community to provide funding to bring the idea to market. The platform would support both funding milestones and time-based funding release mechanisms. In addition, early contributors to a project would benefit from the projects future success, so community members have the incentive to find the best projects early and shift their support to those. The result is that quality projects should bubble up and receive the most funding and attention from the community."]}
    18 {:title "Influencer.io"

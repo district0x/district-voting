@@ -31,7 +31,7 @@
         loading? (subscribe [:voting-loading? :next-district])
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
         vote-form (subscribe [:form.next-district/vote])
-        proposals (subscribe [::proposal-subs/list "district-proposals"])
+        proposals (subscribe [::proposal-subs/list :next-district])
         limit (r/atom 10)
         sort-order (r/atom :votes)
         limited-proposals (reaction (if (pos? @limit)
@@ -43,6 +43,8 @@
         :loading? (or @loading? (:loading? @vote-form))
         :use-loader? true}
        [:h1 (str "Count " (count @limited-proposals)) ]
+       [:h1 (str "Votes " @votes) ]
+       [:h1 (str "Votes " @votes-total) ]
        [:h1 {:style (merge styles/text-center
                            styles/margin-bottom-gutter-less)}
         "What should we build next?"]
@@ -55,7 +57,7 @@
                          :style styles/margin-bottom-gutter-less}]
          ]
         (doall
-          (for [{:keys [:number :title :body :html_url]} @limited-proposals]
+          (for [{:keys [:number :title :body :html_url :comments ]} @limited-proposals]
             [:div
              {:key number
               :style {:margin-top styles/desktop-gutter}}
@@ -70,9 +72,11 @@
              [:div
               {:style styles/margin-top-gutter-less}
               [:div "ID: " number]
+              ;; [:div "Github upvotes: " number]
+              [:div "Github comments: " comments]
               [:a {:href html_url
                    :target :_blank}
-               "Read more"]]
+               "Open in Github"]]
              [voting-bar
               {:votes-total @votes-total
                :votes @votes

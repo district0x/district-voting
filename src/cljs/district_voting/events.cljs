@@ -30,7 +30,7 @@
 
 (def subdomain->initial-dispatch-n
   {"vote" [[:load-voters-count :next-district]
-           [::proposal-events/load "district-proposals"]]
+           [::proposal-events/load :next-district]]
    "feedback" [[:load-voters-count :bittrex-fee]
                [:setup-update-now-interval]]})
 

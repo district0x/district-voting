@@ -12,5 +12,5 @@
 (reg-sub
  ::list
  (fn [db [_ project]]
-   constants/next-district-candidates
-   (get-in db [:proposals project :list])))
+   ;;constants/next-district-candidates
+   (get-in db [:votings project :voting/proposals])))

@@ -15,6 +15,7 @@
    [day8.re-frame.async-flow-fx]
    [day8.re-frame.http-fx] ;;Although not referenced, this needed to register an effect
    [district0x.spec-interceptors :refer [validate-db]]
+   [district-voting.db :refer [setup-candidates]]
    [district0x.big-number :as bn]
    [district0x.debounce-fx]
    [district0x.events :refer [get-contract get-instance all-contracts-loaded?]]
@@ -31,8 +32,9 @@
 (defn- project-url [project]
   "Resolve project's url by project name"
 
-  ;;XSS example https://api.github.com/repos/wambat/ateam/issues
-  (str "https://api.github.com/repos/district0x/" project "/issues"))
+  (let [resolve-table {:next-district "district-proposals"}]
+    ;;XSS example https://api.github.com/repos/wambat/ateam/issues
+    (str "https://api.github.com/repos/district0x/" (get resolve-table project) "/issues")))
 
 (reg-event-fx
   ::load
@@ -52,14 +54,20 @@
   ::loaded
   interceptors
   (fn [{:keys [db]} [project result]]
-    (pf/look [project result])
-    {:db (-> db
-             (assoc-in [:proposals project :list] result)
-             (assoc-in [:proposals project :loading?] false))}))
+    (let [id-indexed-proposals (into {}
+                                     (map (fn [p]
+                                            [(:number p) p])
+                                          result))]
+      (pf/look [project result])
+      (pf/look [id-indexed-proposals])
+      {:db (-> db
+               (assoc-in [:votings project :voting/proposals] result)
+               (assoc-in [:votings project :voting/candidates] (setup-candidates id-indexed-proposals))
+               (assoc-in [:votings project :loading?] false))})))
 
 (reg-event-fx
  ::load-failure
  interceptors
  (fn [{:keys [db]} [project result]]
    {:db (-> db
-            (assoc-in [:proposals project :loading?] false))}))
+            (assoc-in [:votings project :loading?] false))}))
