@@ -21,16 +21,18 @@
        :target :_blank}
    name])
 
-(def sort-options {:dnt-votes {:title "DNT Votes"
-                               :reverse? true
-                               :cmp-fn :dnt-votes}
-                   ;;:upvotes "Github upvotes"
-                   :comments {:title "Github comments"
-                              :reverse? true
-                              :cmp-fn :comments}
-                   :created_at {:title "Latest"
+(def sort-options {:dnt-votes  {:title    "DNT Votes"
                                 :reverse? true
-                                :cmp-fn :created_at}})
+                                :cmp-fn   :dnt-votes}
+                   :upvotes    {:title    "Github upvotes"
+                                :reverse? true
+                                :cmp-fn   :reactions}
+                   :comments   {:title    "Github comments"
+                                :reverse? true
+                                :cmp-fn   :comments}
+                   :created_at {:title    "Latest"
+                                :reverse? true
+                                :cmp-fn   :created_at}})
 
 (defn sort-pulldown [selected-value opts]
   [ui/select-field
@@ -46,6 +48,28 @@
                    :key k
                    :primary-text (:title v)}]) opts))])
 
+(defn count-reactions [reactions]
+  (let [r (dissoc reactions :url :total_count)
+        ops [[#{:+1 :hooray :heart} +]
+             [#{:-1 :confused} -]]]
+    (reduce (fn [acc [sign cnt]]
+              (let [op (some (fn [[signs op]]
+                               (if-let [o (contains? signs sign)]
+                                 op
+                                 #(identity %1))) ops)]
+                (op acc cnt))) 0 r)))
+
+(comment
+  (gh-upvotes {:reactions {:url "https://api.github.93/reactions"
+                           :total_count 4
+                           :+1 4
+                           :-1 1
+                           :laugh 0
+                           :hooray 10
+                           :confused 0
+                           :heart 0}})
+  )
+
 (defmethod page :route.vote/home []
   (let [votes (subscribe [:voting/candidates-voters-dnt-total :next-district])
         votes-total (subscribe [:voting/voters-dnt-total :next-district])
@@ -53,13 +77,16 @@
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
         vote-form (subscribe [:form.next-district/vote])
         all-proposals (subscribe [::proposal-subs/list :next-district])
-        all-proposals-with-votes (reaction (doall (map (fn [p]
-                                                         (assoc p :dnt-votes (get @votes (:number p))))
-                                                       @all-proposals)))
+        all-proposals-p (reaction (doall (map (fn [p]
+                                                (-> p
+                                                    (assoc :dnt-votes (get @votes (:number p)))
+                                                    (update :reactions count-reactions)
+                                                    ))
+                                              @all-proposals)))
         limit (r/atom 10)
         sort-order (r/atom :dnt-votes)
         proposals (reaction (let [sorted (sort-by (get-in sort-options
-                                                          [@sort-order :cmp-fn]) @all-proposals-with-votes)]
+                                                          [@sort-order :cmp-fn]) @all-proposals-p)]
                               (if (get-in sort-options [@sort-order :reverse?])
                                 (reverse sorted)
                                 sorted)))
@@ -89,6 +116,7 @@
                        :html_url
                        :dnt-votes
                        :comments
+                       :reactions
                        :created_at]} @limited-proposals]
             [:div
              {:key number
@@ -105,7 +133,7 @@
               {:style styles/margin-top-gutter-less}
               [:div "ID: " number]
               [:div "Created: " created_at]
-              ;; [:div "Github upvotes: " number]
+              [:div "Github upvotes: " reactions]
               [:div "Votes: " (u/to-locale-string dnt-votes 0)]
               [:div "Github comments: " comments]
               [:a {:href html_url

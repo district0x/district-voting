@@ -44,6 +44,7 @@
      :http-xhrio
      {:method          :get
       :uri             (project-url project)
+      :headers         {"Accept"  "application/vnd.github.squirrel-girl-preview"}
       :timeout         8000                                           ;; optional see API docs
       :response-format (ajax/json-response-format {:keywords? true})  ;; IMPORTANT!: You must provide this.
       :on-success      [::loaded project]
