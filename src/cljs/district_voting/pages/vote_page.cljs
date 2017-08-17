@@ -96,11 +96,12 @@
              [:h2
               {:style styles/margin-bottom-gutter-mini}
               title]
-             ;;TODO: This is not safe. Do we need formatting?
-             ;; [:div {:dangerouslySetInnerHTML
-             ;;        {:__html (md->html body)}}]
+             ;; TODO: WARNING: This is as safe as https://github.com/leizongmin/js-xss lib.
              [expandable-text
-              body]
+              [:div {:dangerouslySetInnerHTML
+                     {:__html (js/filterXSS (md->html body))}}]
+             ;; body
+              ]
              [:div
               {:style styles/margin-top-gutter-less}
               [:div "ID: " number]
