@@ -54,8 +54,7 @@
         loading? (subscribe [:voting-loading? :next-district])
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
         vote-form (subscribe [:form.next-district/vote])
-        all-proposals (subscribe [::proposal-subs/list :next-district])
-        all-proposals-p (subscribe [::proposal-subs/list-with-votes-and-reactions :next-district])
+        all-proposals-p (subscribe [::proposal-subs/list-open-with-votes-and-reactions :next-district])
         limit (r/atom 10)
         sort-order (r/atom :dnt-votes)
         sorted-proposals (subscribe [:sorted-list sort-options] [all-proposals-p sort-order])
@@ -107,7 +106,6 @@
               [:div "ID: " number]
               [:div "Created: " created_at]
               [:div "Github upvotes: " reactions]
-              [:div "Votes: " (u/to-locale-string dnt-votes 0)]
               [:div "Github comments: " comments]
               [:a {:href html_url
                    :target :_blank}

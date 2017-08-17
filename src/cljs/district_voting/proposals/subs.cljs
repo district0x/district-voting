@@ -27,7 +27,7 @@
    (get-in db [:votings project :voting/proposals])))
 
 (reg-sub
- ::list-with-votes-and-reactions
+ ::list-open-with-votes-and-reactions
  (fn [[_ project]]
    {:lst  (sbs/subscribe [::list project])
     :votes (sbs/subscribe [:voting/candidates-voters-dnt-total project])})
@@ -36,6 +36,8 @@
                  (-> p
                      (assoc :dnt-votes (get votes (:number p)))
                      (update :reactions count-reactions)))
-               lst))))
+               (filter (fn [p]
+                         (= (:state p)
+                            "open")) lst)))))
 
 
