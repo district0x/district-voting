@@ -50,8 +50,7 @@
 
 (defn count-reactions [reactions]
   (let [r (dissoc reactions :url :total_count)
-        ops [[#{:+1 :hooray :heart} +]
-             [#{:-1 :confused} -]]]
+        ops [[#{:+1} +]]]
     (reduce (fn [acc [sign cnt]]
               (let [op (some (fn [[signs op]]
                                (if-let [o (contains? signs sign)]
