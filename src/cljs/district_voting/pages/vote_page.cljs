@@ -48,16 +48,6 @@
                    :key k
                    :primary-text (:title v)}]) opts))])
 
-(defn count-reactions [reactions]
-  (let [r (dissoc reactions :url :total_count)
-        ops [[#{:+1} +]]]
-    (reduce (fn [acc [sign cnt]]
-              (let [op (some (fn [[signs op]]
-                               (if-let [o (contains? signs sign)]
-                                 op
-                                 #(identity %1))) ops)]
-                (op acc cnt))) 0 r)))
-
 (defmethod page :route.vote/home []
   (let [votes (subscribe [:voting/candidates-voters-dnt-total :next-district])
         votes-total (subscribe [:voting/voters-dnt-total :next-district])
@@ -65,22 +55,11 @@
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
         vote-form (subscribe [:form.next-district/vote])
         all-proposals (subscribe [::proposal-subs/list :next-district])
-        all-proposals-p (reaction (doall (map (fn [p]
-                                                (-> p
-                                                    (assoc :dnt-votes (get @votes (:number p)))
-                                                    (update :reactions count-reactions)
-                                                    ))
-                                              @all-proposals)))
+        all-proposals-p (subscribe [::proposal-subs/list-with-votes-and-reactions :next-district])
         limit (r/atom 10)
         sort-order (r/atom :dnt-votes)
-        proposals (reaction (let [sorted (sort-by (get-in sort-options
-                                                          [@sort-order :cmp-fn]) @all-proposals-p)]
-                              (if (get-in sort-options [@sort-order :reverse?])
-                                (reverse sorted)
-                                sorted)))
-        limited-proposals (reaction (if (pos? @limit)
-                                      (take @limit @proposals)
-                                      @proposals))]
+        sorted-proposals (subscribe [:sorted-list sort-options] [all-proposals-p sort-order])
+        limited-proposals (subscribe [:limited-list] [sorted-proposals limit])]
     (fn []
       [paper
        {:style {:min-height 600}
@@ -140,7 +119,7 @@
                :loading? @loading?
                :voting-key :next-district
                :form-key :form.next-district/vote}]]))]
-       (when (< (count @limited-proposals) (count @proposals))
+       (when (< (count @limited-proposals) (count @sorted-proposals))
          [ui/flat-button
           {:label "View all"
            ;;:disabled (or (not @can-submit?) @active-address-voted? voting-disabled?)

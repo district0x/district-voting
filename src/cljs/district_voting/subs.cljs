@@ -76,5 +76,18 @@
     (contains? (get-in votings [voting-key :voting/candidates candidate-index :candidate/voters])
                active-address)))
 
+(reg-sub
+ :sorted-list
+ (fn [_ [_ sort-options] [lst sort-order]]
+   (let [sorted (sort-by (get-in sort-options
+                                 [sort-order :cmp-fn]) lst)]
+     (if (get-in sort-options [sort-order :reverse?])
+       (reverse sorted)
+       sorted))))
 
-
+(reg-sub
+ :limited-list
+ (fn [_ _ [lst limit]]
+   (if (pos? limit)
+     (take limit lst)
+     lst)))
