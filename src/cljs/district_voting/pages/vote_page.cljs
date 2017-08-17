@@ -58,17 +58,6 @@
                                  #(identity %1))) ops)]
                 (op acc cnt))) 0 r)))
 
-(comment
-  (gh-upvotes {:reactions {:url "https://api.github.93/reactions"
-                           :total_count 4
-                           :+1 4
-                           :-1 1
-                           :laugh 0
-                           :hooray 10
-                           :confused 0
-                           :heart 0}})
-  )
-
 (defmethod page :route.vote/home []
   (let [votes (subscribe [:voting/candidates-voters-dnt-total :next-district])
         votes-total (subscribe [:voting/voters-dnt-total :next-district])
