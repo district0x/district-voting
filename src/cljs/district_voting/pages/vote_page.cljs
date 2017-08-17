@@ -108,7 +108,12 @@
          [:div "Note: You may only vote for one district per address at a time. No DNT are transferred when signaling, the voting mechanism simply registers your indication to your address. As such, the entire DNT balance stored at that address would be counted towards the vote. Once DNT is transferred to a new address, the district's vote total would be lowered by a corresponding amount. Your vote can be changed at any time by voting again from the same address."]
          [contract-info {:contract-key :next-district
                          :style styles/margin-bottom-gutter-less}]]
-        [sort-pulldown sort-order sort-options]
+        [:div
+         {:style {:width "100%"
+                  :margin-right 10}}
+         [row
+          {:end "xs"}
+          [sort-pulldown sort-order sort-options]]]
         (doall
          (for [{:keys [:number
                        :title
@@ -120,7 +125,8 @@
                        :created_at]} @limited-proposals]
             [:div
              {:key number
-              :style {:margin-top styles/desktop-gutter}}
+              :style {:margin-top styles/desktop-gutter
+                      :width "100%"}}
              [:h2
               {:style styles/margin-bottom-gutter-mini}
               title]

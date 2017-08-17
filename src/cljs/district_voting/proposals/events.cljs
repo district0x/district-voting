@@ -59,8 +59,8 @@
                                      (map (fn [p]
                                             [(:number p) p])
                                           result))]
-      (pf/look [project result])
-      (pf/look [id-indexed-proposals])
+      ;; (pf/look [project result])
+      ;; (pf/look [id-indexed-proposals])
       {:db (-> db
                (assoc-in [:votings project :voting/proposals] result)
                (assoc-in [:votings project :voting/candidates] (setup-candidates id-indexed-proposals))
