@@ -95,12 +95,10 @@
              [:h2
               {:style styles/margin-bottom-gutter-mini}
               title]
-             ;; TODO: WARNING: This is as safe as https://github.com/leizongmin/js-xss lib.
+             ;; WARN: This is as safe as https://github.com/leizongmin/js-xss lib.
              [expandable-text
               [:div {:dangerouslySetInnerHTML
-                     {:__html (js/filterXSS (md->html body))}}]
-             ;; body
-              ]
+                     {:__html (js/filterXSS (md->html body))}}]]
              [:div
               {:style styles/margin-top-gutter-less}
               [:div "ID: " number]
@@ -120,7 +118,6 @@
        (when (< (count @limited-proposals) (count @sorted-proposals))
          [ui/flat-button
           {:label "View all"
-           ;;:disabled (or (not @can-submit?) @active-address-voted? voting-disabled?)
            :primary true
            :on-touch-tap #(reset! limit 0)}])
        [bottom-logo]])))

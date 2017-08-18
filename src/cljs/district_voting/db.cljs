@@ -48,7 +48,7 @@
 
      :now (t/now)
      :votings {:next-district {:voting/voters-count 0
-                               :voting/candidates (setup-candidates {});;constants/next-district-candidates
+                               :voting/candidates (setup-candidates {})
                                :loading? true}
 
                :bittrex-fee {:voting/voters-count 0
