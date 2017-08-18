@@ -7,6 +7,8 @@
     [goog.string.format]
     [medley.core :as medley]
     [re-frame.core :refer [reg-sub]]
+    [re-frame.subs :as sbs]
+    [district-voting.constants :as constants]
     [district0x.utils :as u]))
 
 (reg-sub
@@ -75,4 +77,48 @@
     (contains? (get-in votings [voting-key :voting/candidates candidate-index :candidate/voters])
                active-address)))
 
+(reg-sub
+ :sorted-list
+ (fn [_ [_ sort-options] [lst sort-order]]
+   (let [sorted (sort-by (get-in sort-options
+                                 [sort-order :cmp-fn]) lst)]
+     (if (get-in sort-options [sort-order :reverse?])
+       (reverse sorted)
+       sorted))))
+
+(reg-sub
+ :limited-list
+ (fn [_ _ [lst limit]]
+   (if (pos? limit)
+     (take limit lst)
+     lst)))
+
+(defn count-reactions [reactions]
+  (let [r (dissoc reactions :url :total_count)
+        ops [[#{:+1} +]]]
+    (reduce (fn [acc [sign cnt]]
+              (let [op (some (fn [[signs op]]
+                               (if-let [o (contains? signs sign)]
+                                 op
+                                 #(identity %1))) ops)]
+                (op acc cnt))) 0 r)))
+
+(reg-sub
+ :proposals/list
+ (fn [db [_ project]]
+   (get-in db [:votings project :voting/proposals])))
+
+(reg-sub
+ :proposals/list-open-with-votes-and-reactions
+ (fn [[_ project]]
+   {:lst  (sbs/subscribe [:proposals/list project])
+    :votes (sbs/subscribe [:voting/candidates-voters-dnt-total project])})
+ (fn [{:keys [lst votes]} _]
+   (doall (map (fn [p]
+                 (-> p
+                     (assoc :dnt-votes (get votes (:number p)))
+                     (update :reactions count-reactions)))
+               (filter (fn [p]
+                         (= (:state p)
+                            "open")) lst)))))
 

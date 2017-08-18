@@ -23,12 +23,14 @@
     [goog.string.format]
     [medley.core :as medley]
     [print.foo :include-macros true]
+    [district-voting.db :refer [setup-candidates]]
     [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx inject-cofx path trim-v after debug reg-fx console dispatch]]))
 
 (def interceptors [trim-v (validate-db :district-voting.db/db)])
 
 (def subdomain->initial-dispatch-n
-  {"vote" [[:load-voters-count :next-district]]
+  {"vote" [[:load-voters-count :next-district]
+           [:proposals/load :next-district]]
    "feedback" [[:load-voters-count :bittrex-fee]
                [:setup-update-now-interval]]})
 
@@ -273,3 +275,43 @@
                  :form-key form-key
                  :on-tx-receipt [:district0x.snackbar/show-message "Thank you! Your vote was successfully processed"]}]}))
 
+(defn- project-url [project]
+  "Resolve project's url by project name"
+  (let [resolve-table {:next-district "district-proposals"}]
+    ;;XSS example https://api.github.com/repos/wambat/ateam/issues
+    (str "https://api.github.com/repos/district0x/" (get resolve-table project) "/issues")))
+
+(reg-event-fx
+  :proposals/load
+  interceptors
+  (fn [{:keys [db]} [project]]
+    {:db (assoc-in db [:proposals project :loading?] true)
+     :http-xhrio
+     {:method          :get
+      :uri             (project-url project)
+      :headers         {"Accept"  "application/vnd.github.squirrel-girl-preview"}
+      :timeout         8000
+      :response-format (ajax/json-response-format {:keywords? true})
+      :on-success      [:proposals/loaded project]
+      :on-failure      [:proposals/load-failure project]}}))
+
+
+(reg-event-fx
+  :proposals/loaded
+  interceptors
+  (fn [{:keys [db]} [project result]]
+    (let [id-indexed-proposals (into {}
+                                     (map (fn [p]
+                                            [(:number p) p])
+                                          result))]
+      {:db (-> db
+               (assoc-in [:votings project :voting/proposals] result)
+               (assoc-in [:votings project :voting/candidates] (setup-candidates id-indexed-proposals))
+               (assoc-in [:votings project :loading?] false))})))
+
+(reg-event-fx
+ :proposals/load-failure
+ interceptors
+ (fn [{:keys [db]} [project result]]
+   {:db (-> db
+            (assoc-in [:votings project :loading?] false))}))

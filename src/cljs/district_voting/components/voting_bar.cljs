@@ -16,7 +16,7 @@
            :style styles/votes-progress
            :color styles/theme-orange
            :max (if (zero? votes-total) 1 votes-total)
-           :value (votes index)}]
+           :value (get votes index)}]
          [:div
           {:style styles/text-center}
           [:div
