@@ -6,7 +6,6 @@
     [district-voting.components.voting-bar :refer [voting-bar]]
     [district-voting.styles :as styles]
     [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
-    [district-voting.proposals.subs :as proposal-subs]
     [markdown.core :refer [md->html]]
     [re-frame.core :refer [subscribe dispatch]]
     [reagent.core :as r]
@@ -54,7 +53,7 @@
         loading? (subscribe [:voting-loading? :next-district])
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
         vote-form (subscribe [:form.next-district/vote])
-        all-proposals-p (subscribe [::proposal-subs/list-open-with-votes-and-reactions :next-district])
+        all-proposals-p (subscribe [:proposals/list-open-with-votes-and-reactions :next-district])
         limit (r/atom 10)
         sort-order (r/atom :dnt-votes)
         sorted-proposals (subscribe [:sorted-list sort-options] [all-proposals-p sort-order])
