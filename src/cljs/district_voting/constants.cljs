@@ -31,7 +31,7 @@
                                          :host
                                          (clojure.string/split ".")
                                          first)]
-                         (if (= subdomain "localhost") "vote" subdomain)))
+                         (if (contains? #{"localhost ipfs"} subdomain) "vote" subdomain)))
 (def routes
   ({"vote" ["/" [["proposals" :route.vote/proposals]
                  [true :route.vote/home]]]
