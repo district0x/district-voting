@@ -23,21 +23,31 @@
     [goog.string.format]
     [medley.core :as medley]
     [print.foo :include-macros true]
+    [district-voting.db :refer [setup-candidates]]
+    [print.foo :refer [look tap]]
     [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx inject-cofx path trim-v after debug reg-fx console dispatch]]))
 
 (def interceptors [trim-v (validate-db :district-voting.db/db)])
 
-(def subdomain->initial-dispatch-n
-  {"vote" [[:load-voters-count :next-district]]
-   "feedback" [[:load-voters-count :bittrex-fee]
-               [:setup-update-now-interval]]})
+(def subdomain->initial-events
+  {"vote" {:async-flow
+           {:first-dispatch [:repos/load]
+            :rules [{:when :seen?
+                     :events [:repos/loaded]
+                     :dispatch [:proposals/load :next-district]}
+                    {:when :seen?
+                     :events [:proposals/loaded]
+                     :dispatch [:load-voters-count :next-district]}]}}
+   "feedback" {:dispatch-n [[:load-voters-count :bittrex-fee]
+                            [:setup-update-now-interval]]}})
 
 (reg-event-fx
   :initialize
   interceptors
   (fn [{:keys [:db]}]
-    {:dispatch [:watch-my-dnt-balances]
-     :dispatch-n (subdomain->initial-dispatch-n constants/current-subdomain)}))
+    (merge
+     {:dispatch [:watch-my-dnt-balances]}
+     (subdomain->initial-events constants/current-subdomain))))
 
 (reg-event-fx
   :setup-update-now-interval
@@ -273,3 +283,110 @@
                  :form-key form-key
                  :on-tx-receipt [:district0x.snackbar/show-message "Thank you! Your vote was successfully processed"]}]}))
 
+
+(def repos-url
+  "https://api.github.com/users/district0x/repos")
+
+(reg-event-fx
+ :repos/load
+ interceptors
+ (fn [{:keys [db]} [project]]
+   {:db (assoc-in db [:repos :loading?] true)
+    :http-xhrio
+    {:method          :get
+     :uri             repos-url
+     :params          {:per_page 1000}
+     :timeout         8000
+     :response-format (ajax/text-response-format)
+     :on-success      [:repos/loaded]
+     :on-failure      [:repos/load-failure]}}))
+
+(reg-event-fx
+ :repos/loaded
+ interceptors
+ (fn [{:keys [db]} [raw-result :as p]]
+   (let [parsed (.parse js/JSON raw-result)
+         repos (js->clj parsed :keywordize-keys true)]
+     {:db (-> db
+              (assoc-in [:repos :list] repos)
+              (assoc-in [:repos :loading?] false))})))
+
+(reg-event-fx
+ :repos/load-failure
+ interceptors
+ (fn [{:keys [db]} [result]]
+   {:db (-> db
+            (assoc-in [:repos :loading?] false))
+    :dispatch [:district0x.snackbar/show-message "Sorry, we couldn't fetch projects descriptions"]}))
+
+(defn- project-desc [project]
+  "Resolve project's url by project name"
+  (let [resolve-table {:next-district "district-proposals"}]
+    ;;XSS example https://api.github.com/repos/wambat/ateam/issues
+    {:name (get resolve-table project)
+     :url (str "https://api.github.com/repos/district0x/" (get resolve-table project) "/issues")}))
+
+(reg-event-fx
+  :proposals/load
+  interceptors
+  (fn [{:keys [db]} [project paging]]
+    (let [paging (if paging paging
+                     {:per_page 50
+                      :page 1})]
+      {:db (assoc-in db [:proposals project :loading?] true)
+       :http-xhrio
+       {:method          :get
+        :uri             (:url (project-desc project))
+        :params          paging
+        :headers         {"Accept"  "application/vnd.github.squirrel-girl-preview"}
+        :timeout         8000
+        ;;:response-format (ajax/json-response-format {:keywords? true}) ;;Troubles reading json viag goog lib
+        :response-format (ajax/text-response-format)
+        :on-success      [:proposals/chunk-loaded project paging]
+        :on-failure      [:proposals/load-failure project]}})))
+
+(reg-event-fx
+  :proposals/chunk-loaded
+  interceptors
+  (fn [{:keys [db]} [project paging raw-result :as p]]
+    (let [repos (get-in db [:repos :list])
+          repo-name (:name (project-desc project))
+          issues-count (some (fn [repo]
+                               (if (= (:name repo)
+                                      repo-name)
+                                 (:open_issues_count repo)))
+                             repos)
+          parsed (.parse js/JSON raw-result)
+          result (js->clj parsed :keywordize-keys true)
+
+          proposals ((fnil concat [])
+                     (get-in db [:votings project :voting/proposals])
+                     result)]
+      {:db (-> db
+               (assoc-in [:votings project :voting/proposals] proposals))
+       :dispatch (if (< (* (:per_page paging)
+                           (:page paging)) issues-count)
+                   [:proposals/load project (update paging :page inc)]
+                   [:proposals/loaded project])})))
+
+(reg-event-fx
+  :proposals/loaded
+  interceptors
+  (fn [{:keys [db]} [project]]
+    (let [index-proposals-fn #(into {}
+                                    (map (fn [p]
+                                           [(:number p) p])
+                                         %))]
+      {:db (-> db
+               (assoc-in [:votings project :voting/candidates] (setup-candidates
+                                                                (index-proposals-fn
+                                                                 (get-in db [:votings project :voting/proposals]))))
+               (assoc-in [:votings project :loading?] false))})))
+
+(reg-event-fx
+ :proposals/load-failure
+ interceptors
+ (fn [{:keys [db]} [project result]]
+   {:db (-> db
+            (assoc-in [:votings project :loading?] false))
+    :dispatch [:district0x.snackbar/show-message "Sorry, we couldn't fetch voting issues."]}))

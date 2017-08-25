@@ -237,10 +237,3 @@
    :z-index -1
    :height 60
    :top 150})
-
-(def blob5
-  {:position :absolute
-   :left 100
-   :z-index -1
-   :height 1000
-   :bottom "-700px"})

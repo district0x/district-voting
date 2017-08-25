@@ -55,6 +55,8 @@
           {:style {:padding-bottom 20
                    :overflow :hidden
                    :position :relative
+                   :background "transparent url('./images/blob-big-bottom.png') no-repeat"
+                   :background-position "bottom -700px center"
                    :min-height "100%"}}
           [:img {:src "./images/green-blob2.svg"
                  :style styles/blob4}]
@@ -64,8 +66,6 @@
                  :style styles/blob2}]
           [:img {:src "./images/green-blobs.svg"
                  :style styles/blob3}]
-          [:img {:src "./images/blob-big-bottom.png"
-                 :style styles/blob5}]
           [ui/app-bar
            {:show-menu-icon-button false
             :style styles/app-bar
