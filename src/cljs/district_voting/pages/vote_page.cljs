@@ -107,7 +107,7 @@
              (when (= @expanded number )
                [:div {:style {:overflow-x :auto}}
                 [:div {:dangerouslySetInnerHTML
-                       {:__html (js/filterXSS (md->html body))}}]
+                       {:__html ((aget js/window "filterXSS") (md->html body))}}]
                 [:div {:style (merge styles/text-center
                                      {:font-size "0.9em"
                                       :cursor :pointer})}
