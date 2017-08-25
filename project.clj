@@ -3,15 +3,18 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[cljs-react-material-ui "0.2.43"]
-                 [day8.re-frame/async-flow-fx "0.0.6"]
+  :dependencies [[cljs-ajax "0.6.0"]
+                 [cljs-react-material-ui "0.2.43"]
+                 [day8.re-frame/async-flow-fx "0.0.8"]
+                 [day8.re-frame/http-fx "0.1.4"]
                  [district0x "0.1.20"]
                  [madvas/reagent-patched "0.6.1" :exclusions [cljsjs/react cljsjs/react-dom]]
                  [medley "0.8.3"]
                  [org.clojure/clojurescript "1.9.671"]
                  [print-foo-cljs "2.0.3"]
-                 [re-frame "0.9.4" :exclusions [reagent]]
-                 [com.cemerick/url "0.1.1"]]
+                 [re-frame "0.10.1" :exclusions [reagent]]
+                 [com.cemerick/url "0.1.1"]
+                 [markdown-clj "0.9.99"]]
 
   :plugins [[lein-auto "0.1.2"]
             [lein-cljsbuild "1.1.4"]
