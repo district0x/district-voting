@@ -30,24 +30,29 @@
 (def interceptors [trim-v (validate-db :district-voting.db/db)])
 
 (def subdomain->initial-events
-  {"vote" {:async-flow
-           {:first-dispatch [:repos/load]
-            :rules [{:when :seen?
-                     :events [:repos/loaded]
-                     :dispatch [:proposals/load :next-district]}
-                    {:when :seen?
-                     :events [:proposals/loaded]
-                     :dispatch [:load-voters-count :next-district]}]}}
-   "feedback" {:dispatch-n [[:load-voters-count :bittrex-fee]
-                            [:setup-update-now-interval]]}})
+  {"vote" (fn [p]
+            {:async-flow
+             {:first-dispatch [:repos/load]
+              :rules [{:when :seen?
+                       :events [:repos/loaded]
+                       :dispatch [:proposals/load p]}
+                      {:when :seen?
+                       :events [:proposals/loaded]
+                       :dispatch [:load-voters-count p]}]}})
+   "feedback" (fn [_]
+                {:dispatch-n [[:load-voters-count :bittrex-fee]
+                              [:setup-update-now-interval]]})})
 
 (reg-event-fx
   :initialize
   interceptors
   (fn [{:keys [:db]}]
-    (merge
-     {:dispatch [:watch-my-dnt-balances]}
-     (subdomain->initial-events constants/current-subdomain))))
+    (let [project (keyword (get-in db [:active-page :route-params :project] :next-district))]
+      (look project)
+      (merge
+       {:dispatch [:watch-my-dnt-balances]}
+       ((subdomain->initial-events constants/current-subdomain)
+        project)))))
 
 (reg-event-fx
   :setup-update-now-interval
@@ -321,7 +326,8 @@
 
 (defn- project-desc [project]
   "Resolve project's url by project name"
-  (let [resolve-table {:next-district "district-proposals"}]
+  (let [resolve-table {:next-district "district-proposals"
+                       :namebazaar "name-bazaar"}]
     ;;XSS example https://api.github.com/repos/wambat/ateam/issues
     {:name (get resolve-table project)
      :url (str "https://api.github.com/repos/district0x/" (get resolve-table project) "/issues")}))
