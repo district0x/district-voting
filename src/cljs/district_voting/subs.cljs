@@ -34,16 +34,10 @@
       (if (some neg? (vals time-remaining))
         (medley/map-vals (constantly 0) time-remaining)
         time-remaining))))
-
 (reg-sub
-  :form.next-district/vote
-  (fn [db]
-    (:default (:form.next-district/vote db))))
-
-(reg-sub
-  :form.bittrex-fee/vote
-  (fn [db]
-    (:default (:form.bittrex-fee/vote db))))
+ :voting-form
+ (fn [db project]
+   (get-in db [:voting-forms project :default])))
 
 (reg-sub
   :voting/voters-dnt-total

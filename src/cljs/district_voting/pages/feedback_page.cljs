@@ -14,7 +14,7 @@
   (let [votes (subscribe [:voting/candidates-voters-dnt-total :bittrex-fee])
         votes-total (subscribe [:voting/voters-dnt-total :bittrex-fee])
         loading? (subscribe [:voting-loading? :bittrex-fee])
-        vote-form (subscribe [:form.bittrex-fee/vote])
+        vote-form (subscribe [:voting-form :bittrex-fee])
         time-remaining (subscribe [:voting-time-remaining :bittrex-fee])]
     (fn []
       [paper
