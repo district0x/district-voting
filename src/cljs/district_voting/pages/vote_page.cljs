@@ -8,7 +8,7 @@
     [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
     [markdown.core :refer [md->html]]
     [cljs-time.format :as time-format]
-    [re-frame.core :refer [subscribe dispatch]]
+    [re-frame.core :refer [subscribe dispatch dispatch-sync]]
     [reagent.core :as r]
     [district0x.utils :as u]
     [cljs-react-material-ui.reagent :as ui]
@@ -56,12 +56,12 @@
 (defmethod page :route.vote/home []
   (let [active-page (subscribe [:district0x/active-page])
         project (reaction (keyword (get-in @active-page [:route-params :project] "next-district")))
-        votes (subscribe [:voting/candidates-voters-dnt-total @project])
-        votes-total (subscribe [:voting/voters-dnt-total @project])
-        loading? (subscribe [:voting-loading? @project])
+        votes (subscribe [:voting/candidates-voters-dnt-total] [project])
+        votes-total (subscribe [:voting/voters-dnt-total] [project])
+        loading? (subscribe [:voting-loading?] [project])
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
-        vote-form (subscribe [:voting-form @project])
-        all-proposals-p (subscribe [:proposals/list-open-with-votes-and-reactions @project])
+        vote-form (subscribe [:voting-form] [project])
+        all-proposals-p (subscribe [:proposals/list-open-with-votes-and-reactions] [project])
         limit (r/atom 10)
         sort-order (r/atom :dnt-votes)
         expanded (r/atom nil)
@@ -74,7 +74,8 @@
         :use-loader? true}
        [:h1 {:style (merge styles/text-center
                            styles/margin-bottom-gutter-less)}
-        "What should we build next?"]
+        (str "What should we build next for " (name @project) "?")]
+       [:div {:on-click #(dispatch-sync [:reinit])} [:strong "Reload!"]]
        [row
         [:div "district0x makes use of a " [link "district proposal process" "https://github.com/district0x/district-proposals"]
          " to allow the community to determine what districts they would like to see built and deployed to the network next by the district0x team.  To signal for a district you would like to see launched, please complete the following steps:"

@@ -9,6 +9,7 @@
     [district-voting.db]
     [district-voting.events]
     [district-voting.subs]
+    [district-voting.init :refer [start-loading-event]]
     [district0x.events]
     [district0x.subs]
     [goog.string.format]
@@ -26,20 +27,12 @@
   ;(.clear js/console)
   (r/render [main-panel] (.getElementById js/document "app")))
 
+
 (defn ^:export init []
   (s/check-asserts goog.DEBUG)
   (google-analytics-fx/set-enabled! (not goog.DEBUG))
-  (dispatch-sync [:district0x/initialize
-                  {:default-db district-voting.db/default-db
-                   :effects
-                   {:async-flow {:first-dispatch [:district0x/load-smart-contracts {:version "1.0.0"}]
-                                 :rules [{:when :seen?
-                                          :events [:district0x/smart-contracts-loaded :district0x/my-addresses-loaded]
-                                          :dispatch-n [[:initialize]]}]}
-                    :dispatch-interval {:dispatch [:load-voters-dnt-balances]
-                                        :ms 300000
-                                        :db-path [:load-voters-dnt-balances-interval]}}}])
-  (set! (.-onhashchange js/window)
-        #(dispatch [:district0x/set-active-page (u/match-current-location constants/routes)]))
+  (dispatch-sync (update start-loading-event 1 assoc :default-db district-voting.db/default-db))
+  (aset js/window "onhashchange"
+        #(dispatch [:set-active-page (u/match-current-location constants/routes)]))
   (mount-root))
 

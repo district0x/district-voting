@@ -44,9 +44,9 @@
              {:dependencies [[org.clojure/clojure "1.8.0"]
                              [binaryage/devtools "0.9.4"]
                              [com.cemerick/piggieback "0.2.1"]
-                             [figwheel-sidecar "0.5.10"]
+                             [figwheel-sidecar "0.5.12"]
                              [org.clojure/tools.nrepl "0.2.13"]]
-              :plugins [[lein-figwheel "0.5.10"]]
+              :plugins [[lein-figwheel "0.5.12"]]
               :source-paths []
               :resource-paths ["resources"]
               :cljsbuild {:builds [{:id "dev"

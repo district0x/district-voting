@@ -21,7 +21,6 @@
                                                 :req [:voting/voters-count
                                                       :voting/candidates])))
 
-;;(s/def :form.next-district/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
 (s/def ::submit-form (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
 
 (s/def ::voting-forms (s/map-of keyword? ::submit-form))

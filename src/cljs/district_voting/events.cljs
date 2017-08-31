@@ -1,33 +1,34 @@
 (ns district-voting.events
   (:require
-    [ajax.core :as ajax]
-    [akiroz.re-frame.storage :as re-frame-storage]
-    [cljs-time.coerce :as time-coerce]
-    [cljs-time.core :as t]
-    [cljs-web3.core :as web3]
-    [cljs-web3.eth :as web3-eth]
-    [cljs-web3.personal :as web3-personal]
-    [cljs-web3.utils :as web3-utils]
-    [cljs.spec.alpha :as s]
-    [clojure.data :as data]
-    [clojure.set :as set]
-    [clojure.string :as string]
-    [day8.re-frame.async-flow-fx]
-    [district-voting.constants :as constants]
-    [district0x.spec-interceptors :refer [validate-db]]
-    [district0x.big-number :as bn]
-    [district0x.debounce-fx]
-    [district0x.events :refer [get-contract get-instance all-contracts-loaded?]]
-    [district0x.utils :as u]
-    [goog.string :as gstring]
-    [goog.string.format]
-    [medley.core :as medley]
-    [print.foo :include-macros true]
-    [district-voting.db :refer [setup-candidates]]
-    [print.foo :refer [look tap]]
-    [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx inject-cofx path trim-v after debug reg-fx console dispatch]]))
+   [district-voting.init :refer [start-loading-event]]
+   [ajax.core :as ajax]
+   [akiroz.re-frame.storage :as re-frame-storage]
+   [cljs-time.coerce :as time-coerce]
+   [cljs-time.core :as t]
+   [cljs-web3.core :as web3]
+   [cljs-web3.eth :as web3-eth]
+   [cljs-web3.personal :as web3-personal]
+   [cljs-web3.utils :as web3-utils]
+   [cljs.spec.alpha :as s]
+   [clojure.data :as data]
+   [clojure.set :as set]
+   [clojure.string :as string]
+   [day8.re-frame.async-flow-fx]
+   [district-voting.constants :as constants]
+   [district0x.spec-interceptors :refer [validate-db]]
+   [district0x.big-number :as bn]
+   [district0x.debounce-fx]
+   [district0x.events :refer [get-contract get-instance all-contracts-loaded?]]
+   [district0x.utils :as u]
+   [goog.string :as gstring]
+   [goog.string.format]
+   [medley.core :as medley]
+   [print.foo :include-macros true]
+   [district-voting.db :refer [setup-candidates]]
+   [print.foo :refer [look tap]]
+   [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx inject-cofx path trim-v after debug reg-fx console dispatch]]))
 
-(def interceptors [trim-v (validate-db :district-voting.db/db)])
+(def interceptors [debug trim-v (validate-db :district-voting.db/db)])
 
 (def subdomain->initial-events
   {"vote" (fn [p]
@@ -48,7 +49,7 @@
   interceptors
   (fn [{:keys [:db]}]
     (let [project (keyword (get-in db [:active-page :route-params :project] :next-district))]
-      (look project)
+      (look db)
       (merge
        {:dispatch [:watch-my-dnt-balances]}
        ((subdomain->initial-events constants/current-subdomain)
@@ -329,8 +330,9 @@
   (let [resolve-table {:next-district "district-proposals"
                        :namebazaar "name-bazaar"}]
     ;;XSS example https://api.github.com/repos/wambat/ateam/issues
-    {:name (get resolve-table project)
-     :url (str "https://api.github.com/repos/district0x/" (get resolve-table project) "/issues")}))
+    (when-let [nm (get resolve-table project)]
+      {:name nm
+       :url (str "https://api.github.com/repos/district0x/" nm "/issues")})))
 
 (reg-event-fx
   :proposals/load
@@ -339,17 +341,20 @@
     (let [paging (if paging paging
                      {:per_page 50
                       :page 1})]
-      {:db (assoc-in db [:proposals project :loading?] true)
-       :http-xhrio
-       {:method          :get
-        :uri             (:url (project-desc project))
-        :params          paging
-        :headers         {"Accept"  "application/vnd.github.squirrel-girl-preview"}
-        :timeout         8000
-        ;;:response-format (ajax/json-response-format {:keywords? true}) ;;Troubles reading json viag goog lib
-        :response-format (ajax/text-response-format)
-        :on-success      [:proposals/chunk-loaded project paging]
-        :on-failure      [:proposals/load-failure project]}})))
+      (if-let [pdesc (project-desc project)]
+        {:db (assoc-in db [:proposals project :loading?] true)
+         :http-xhrio
+         {:method          :get
+          :uri             (:url pdesc)
+          :params          paging
+          :headers         {"Accept"  "application/vnd.github.squirrel-girl-preview"}
+          :timeout         8000
+          ;;:response-format (ajax/json-response-format {:keywords? true}) ;;Troubles reading json viag goog lib
+          :response-format (ajax/text-response-format)
+          :on-success      [:proposals/chunk-loaded project paging]
+          :on-failure      [:proposals/load-failure project]}}
+        {:db db
+         :dispatch [:district0x.snackbar/show-message "Sorry, we can't find the project."]}))))
 
 (reg-event-fx
   :proposals/chunk-loaded
@@ -396,3 +401,34 @@
    {:db (-> db
             (assoc-in [:votings project :loading?] false))
     :dispatch [:district0x.snackbar/show-message "Sorry, we couldn't fetch voting issues."]}))
+
+(reg-event-fx
+ :reinit
+ interceptors
+ (fn [{:keys [:db]} _]
+   (look db)
+   {:db db
+    :dispatch [:initialize]
+    ;; :async-flow {:first-dispatch [:district0x/load-smart-contracts {:version "1.0.0"}]
+    ;;              :rules [{:when :seen?
+    ;;                       :events [:district0x/smart-contracts-loaded :district0x/my-addresses-loaded]
+    ;;                       :dispatch-n [[:initialize]]}]}
+    }))
+
+(reg-event-fx
+ :set-active-page
+ interceptors
+ (fn [{:keys [:db]} _]
+   (let [match (u/match-current-location constants/routes)
+         new-p (get-in (u/match-current-location constants/routes)
+                       [:route-params :project] "next-district")
+         old-p (get-in db [:active-page :route-params :project] "next-district")]
+     ;;(js/alert (str "NP " new-p ":" old-p))
+     (if-not (= new-p old-p)
+       {:db (assoc db :active-page match)
+        ;; :dispatch-n [[:district0x/set-active-page match]
+        ;;              [:reinit]]
+        :dispatch [:reinit]
+        }
+       {:db db
+        :dispatch [:district0x/set-active-page match]}))))
