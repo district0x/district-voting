@@ -102,15 +102,11 @@
 (reg-sub
  :proposals/list
  (fn [db [_] [project]]
-   (look project)
-   (look project)
-   (look db)
    (get-in db [:votings project :voting/proposals])))
 
 (reg-sub
  :proposals/list-open-with-votes-and-reactions
  (fn [_ [project]]
-   (look project)
    {:lst  (sbs/subscribe [:proposals/list] [(reaction project)])
     :votes (sbs/subscribe [:voting/candidates-voters-dnt-total] [(reaction project)])})
  (fn [{:keys [lst votes]} _]

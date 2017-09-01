@@ -75,7 +75,6 @@
        [:h1 {:style (merge styles/text-center
                            styles/margin-bottom-gutter-less)}
         (str "What should we build next for " (name @project) "?")]
-       [:div {:on-click #(dispatch-sync [:reinit])} [:strong "Reload!"]]
        [row
         [:div "district0x makes use of a " [link "district proposal process" "https://github.com/district0x/district-proposals"]
          " to allow the community to determine what districts they would like to see built and deployed to the network next by the district0x team.  To signal for a district you would like to see launched, please complete the following steps:"
@@ -99,7 +98,7 @@
                        :reactions
                        :created_at]} @limited-proposals]
             [:div
-             {:key number
+             {:key (str @project number)
               :style {:margin-top styles/desktop-gutter
                       :width "100%"}}
              [:h2

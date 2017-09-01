@@ -1,6 +1,5 @@
 (ns district-voting.events
   (:require
-   [district-voting.init :refer [start-loading-event]]
    [ajax.core :as ajax]
    [akiroz.re-frame.storage :as re-frame-storage]
    [cljs-time.coerce :as time-coerce]
@@ -406,7 +405,6 @@
  :reinit
  interceptors
  (fn [{:keys [:db]} _]
-   (look db)
    {:db db
     :dispatch [:initialize]
     ;; :async-flow {:first-dispatch [:district0x/load-smart-contracts {:version "1.0.0"}]
@@ -425,10 +423,8 @@
          old-p (get-in db [:active-page :route-params :project] "next-district")]
      ;;(js/alert (str "NP " new-p ":" old-p))
      (if-not (= new-p old-p)
-       {:db (assoc db :active-page match)
-        ;; :dispatch-n [[:district0x/set-active-page match]
-        ;;              [:reinit]]
-        :dispatch [:reinit]
-        }
+       {;;:db (assoc db :active-page match)
+        :dispatch-n [[:district0x/set-active-page match]
+                     [:reinit]]}
        {:db db
         :dispatch [:district0x/set-active-page match]}))))
