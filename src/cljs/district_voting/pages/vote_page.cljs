@@ -80,7 +80,7 @@
          " to allow the community to determine what districts they would like to see built and deployed to the network next by the district0x team.  To signal for a district you would like to see launched, please complete the following steps:"
          [how-to-instructions]
          [:div "Note: You may only vote for one district per address at a time. No DNT are transferred when signaling, the voting mechanism simply registers your indication to your address. As such, the entire DNT balance stored at that address would be counted towards the vote. Once DNT is transferred to a new address, the district's vote total would be lowered by a corresponding amount. Your vote can be changed at any time by voting again from the same address."]
-         [contract-info {:contract-key :next-district
+         [contract-info {:contract-key @project
                          :style styles/margin-bottom-gutter-less}]]
         [:div
          {:style {:width "100%"

@@ -35,10 +35,11 @@
       (if (some neg? (vals time-remaining))
         (medley/map-vals (constantly 0) time-remaining)
         time-remaining))))
+
 (reg-sub
  :voting-form
  (fn [db _ [project]]
-   (get-in db [:voting-forms project :default])))
+   (get-in db [(get-in db [:voting-forms project]) :default])))
 
 (reg-sub
   :voting/voters-dnt-total

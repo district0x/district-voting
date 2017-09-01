@@ -93,6 +93,9 @@
   (fn [{:keys [db]} [voting-key]]
     (let [instance (get-instance db voting-key)
           {:keys [:voting/voters-count]} (get-in db [:votings voting-key])]
+      (look "LOAD-VOTES")
+      (look voting-key)
+      (look instance)
       (merge
         {:web3-fx.contract/constant-fns
          {:fns
@@ -229,6 +232,9 @@
                                                             :voting-key :next-district
                                                             :candidates constants/next-district-candidates}]
                                           [:generate-votes {:random? true
+                                                            :voting-key :namebazaar
+                                                            :candidates constants/next-district-candidates}]
+                                          [:generate-votes {:random? true
                                                             :voting-key :bittrex-fee
                                                             :candidates constants/bittrex-fee-candidates}]]
                              :halt? true}
@@ -236,6 +242,7 @@
                              :events [:district0x/smart-contracts-loaded]
                              :dispatch-n [[:deploy-district-voting-contract {:voting-key :next-district}]
                                           [:deploy-district-voting-contract {:voting-key :bittrex-fee}]
+                                          [:deploy-district-voting-contract {:voting-key :namebazaar}]
                                           [:deploy-dnt-token-contract
                                            {:dnt-token/controller (first my-addresses)
                                             :dnt-token/minime-token-factory 0x0}]]}]}})))
@@ -279,7 +286,7 @@
   :voting/vote
   interceptors
   (fn [{:keys [db]} [project form-data address]]
-    (let [form-key (get-in db [:voting-forms project :default])
+    (let [form-key (get-in db [:voting-forms project])
           v-data {:form-data form-data
                   :address address
                   :fn-key (keyword project :vote)

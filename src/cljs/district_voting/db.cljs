@@ -21,12 +21,14 @@
                                                 :req [:voting/voters-count
                                                       :voting/candidates])))
 
-(s/def ::submit-form (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
 
-(s/def ::voting-forms (s/map-of keyword? ::submit-form))
+(s/def ::voting-forms (s/map-of keyword? keyword?))
 (s/def ::db (s/merge :district0x.db/db
                      (s/keys :req-un [::votings
                                       ::voting-forms])))
+(s/def :form.next-district/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
+(s/def :form.bittrex-fee/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
+(s/def :form.namebazaar/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
 
 (defn setup-candidates [candidates]
   (into {}
@@ -61,15 +63,19 @@
                                     :voting/candidates   (setup-candidates constants/bittrex-fee-candidates)
                                     :loading?            true
                                     :end-time            (t/date-time 2017 8 12 4)}}
-     :voting-forms {:next-district {:default {:loading?  false
-                                              :gas-limit 100000
-                                              :data      {:candidate/index 1}
-                                              :errors    #{}}}
-                    :bittrex-fee   {:default {:loading?  false
-                                              :gas-limit 100000
-                                              :data      {:candidate/index 1}
-                                              :errors    #{}}}
-                    :namebazaar    {:default {:loading?  false
-                                              :gas-limit 100000
-                                              :data      {:candidate/index 1}
-                                              :errors    #{}}}}}))
+     :voting-forms {:bittrex-fee :voting-form/bittrex-fee
+                    :next-district :voting-form/next-district
+                    :namebazaar :voting-form/namebazaar}
+
+     :voting-form/next-district {:default {:loading?  false
+                               :gas-limit 100000
+                               :data      {:candidate/index 1}
+                               :errors    #{}}}
+     :voting-form/bittrex-fee   {:default {:loading?  false
+                               :gas-limit 100000
+                               :data      {:candidate/index 1}
+                               :errors    #{}}}
+     :voting-form/namebazaar    {:default {:loading?  false
+                               :gas-limit 100000
+                               :data      {:candidate/index 1}
+                               :errors    #{}}}}))
