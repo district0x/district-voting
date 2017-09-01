@@ -69,8 +69,8 @@
   :voting/active-address-voted?
   :<- [:district0x/active-address]
   :<- [:votings]
-  (fn [[active-address votings] [_ voting-key candidate-index]]
-    (contains? (get-in votings [voting-key :voting/candidates candidate-index :candidate/voters])
+  (fn [[active-address votings] [_ project candidate-index]]
+    (contains? (get-in votings [project :voting/candidates candidate-index :candidate/voters])
                active-address)))
 
 (reg-sub

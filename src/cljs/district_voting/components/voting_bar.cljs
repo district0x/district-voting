@@ -8,7 +8,7 @@
 
 (defn voting-bar []
   (let [can-submit? (subscribe [:district0x/can-submit-into-blockchain?])]
-    (fn [{:keys [:votes-total :votes :index :loading? :voting-key :form-key :voting-disabled?]}]
+    (fn [{:keys [:votes-total :votes :index :loading? :project :form-key :voting-disabled?]}]
       (when-not loading?
         [:div
          [ui/linear-progress
@@ -24,7 +24,7 @@
            (u/to-locale-string (if (pos? votes-total)
                                  (* (/ (votes index) votes-total) 100)
                                  0) 2) "%)"]]
-         (let [active-address-voted? (subscribe [:voting/active-address-voted? voting-key index])]
+         (let [active-address-voted? (subscribe [:voting/active-address-voted? project index])]
            [row
             {:end "xs"}
             [ui/flat-button
@@ -33,4 +33,4 @@
                        "Vote")
               :disabled (or (not @can-submit?) @active-address-voted? voting-disabled?)
               :primary true
-              :on-touch-tap #(dispatch [:voting/vote voting-key form-key {:candidate/index index}])}]])]))))
+              :on-touch-tap #(dispatch [:voting/vote project {:candidate/index index}])}]])]))))

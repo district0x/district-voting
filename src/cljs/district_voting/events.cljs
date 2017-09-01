@@ -278,15 +278,18 @@
 (reg-event-fx
   :voting/vote
   interceptors
-  (fn [{:keys [db]} [voting-key form-key form-data address]]
-    {:dispatch [:district0x.form/submit
-                {:form-data form-data
-                 :address address
-                 :fn-key (keyword voting-key :vote)
-                 :fn-args [:candidate/index]
-                 :tx-opts {:gas-price (web3/to-wei 4 :gwei)}
-                 :form-key form-key
-                 :on-tx-receipt [:district0x.snackbar/show-message "Thank you! Your vote was successfully processed"]}]}))
+  (fn [{:keys [db]} [project form-data address]]
+    (let [form-key (get-in db [:voting-forms project :default])
+          v-data {:form-data form-data
+                  :address address
+                  :fn-key (keyword project :vote)
+                  :fn-args [:candidate/index]
+                  :tx-opts {:gas-price (web3/to-wei 4 :gwei)}
+                  :form-key form-key
+                  :on-tx-receipt [:district0x.snackbar/show-message "Thank you! Your vote was successfully processed"]}]
+      (look v-data)
+      {:dispatch [:district0x.form/submit
+                  v-data]})))
 
 
 (def repos-url

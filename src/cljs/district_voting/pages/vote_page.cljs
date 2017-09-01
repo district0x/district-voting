@@ -138,8 +138,7 @@
                :votes @votes
                :index number
                :loading? @loading?
-               :voting-key :next-district
-               :form-key :form.next-district/vote}]]))]
+               :project @project}]]))]
        (when (< (count @limited-proposals) (count @sorted-proposals))
          [ui/flat-button
           {:label "View all"
