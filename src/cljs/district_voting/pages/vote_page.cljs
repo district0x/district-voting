@@ -138,7 +138,7 @@
                :votes @votes
                :index number
                :loading? @loading?
-               :project @project}]]))]
+               :voting-key @project}]]))]
        (when (< (count @limited-proposals) (count @sorted-proposals))
          [ui/flat-button
           {:label "View all"

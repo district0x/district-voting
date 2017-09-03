@@ -285,11 +285,11 @@
 (reg-event-fx
   :voting/vote
   interceptors
-  (fn [{:keys [db]} [project form-data address]]
-    (let [form-key (get-in db [:voting-forms project])
+  (fn [{:keys [db]} [voting-key form-data address]]
+    (let [form-key (get-in db [:voting-forms voting-key])
           v-data {:form-data form-data
                   :address address
-                  :fn-key (keyword project :vote)
+                  :fn-key (keyword voting-key :vote)
                   :fn-args [:candidate/index]
                   :tx-opts {:gas-price (web3/to-wei 4 :gwei)}
                   :form-key form-key

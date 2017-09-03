@@ -22,13 +22,17 @@
                                                       :voting/candidates])))
 
 
+(s/def :form.next-district/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
+(s/def :form.bittrex-fee/vote   (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
+(s/def :form.namebazaar/vote    (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
+
 (s/def ::voting-forms (s/map-of keyword? keyword?))
 (s/def ::db (s/merge :district0x.db/db
                      (s/keys :req-un [::votings
-                                      ::voting-forms])))
-(s/def :form.next-district/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
-(s/def :form.bittrex-fee/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
-(s/def :form.namebazaar/vote (s/map-of :district0x.db/only-default-kw :district0x.db/submit-form))
+                                      ::voting-forms]
+                             :req [:voting-form/namebazaar
+                                   :voting-form/next-district
+                                   :voting-form/bittrex-fee])))
 
 (defn setup-candidates [candidates]
   (into {}
