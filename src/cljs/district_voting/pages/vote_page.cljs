@@ -8,7 +8,7 @@
     [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
     [markdown.core :refer [md->html]]
     [cljs-time.format :as time-format]
-    [re-frame.core :refer [subscribe dispatch dispatch-sync]]
+    [re-frame.core :refer [subscribe dispatch]]
     [reagent.core :as r]
     [district0x.utils :as u]
     [cljs-react-material-ui.reagent :as ui]
