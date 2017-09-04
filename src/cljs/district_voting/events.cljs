@@ -27,7 +27,7 @@
    [print.foo :refer [look tap]]
    [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx inject-cofx path trim-v after debug reg-fx console dispatch]]))
 
-(def interceptors [debug trim-v (validate-db :district-voting.db/db)])
+(def interceptors [trim-v (validate-db :district-voting.db/db)])
 
 (def subdomain->initial-events
   {"vote" (fn [p]
@@ -48,7 +48,6 @@
   interceptors
   (fn [{:keys [:db]}]
     (let [project (keyword (get-in db [:active-page :route-params :project] :next-district))]
-      (look db)
       (merge
        {:dispatch [:watch-my-dnt-balances]}
        ((subdomain->initial-events constants/current-subdomain)
@@ -93,9 +92,6 @@
   (fn [{:keys [db]} [voting-key]]
     (let [instance (get-instance db voting-key)
           {:keys [:voting/voters-count]} (get-in db [:votings voting-key])]
-      (look "LOAD-VOTES")
-      (look voting-key)
-      (look instance)
       (merge
         {:web3-fx.contract/constant-fns
          {:fns
@@ -294,7 +290,6 @@
                   :tx-opts {:gas-price (web3/to-wei 4 :gwei)}
                   :form-key form-key
                   :on-tx-receipt [:district0x.snackbar/show-message "Thank you! Your vote was successfully processed"]}]
-      (look v-data)
       {:dispatch [:district0x.form/submit
                   v-data]})))
 
@@ -431,10 +426,8 @@
          new-p (get-in (u/match-current-location constants/routes)
                        [:route-params :project] "next-district")
          old-p (get-in db [:active-page :route-params :project] "next-district")]
-     ;;(js/alert (str "NP " new-p ":" old-p))
      (if-not (= new-p old-p)
-       {;;:db (assoc db :active-page match)
-        :dispatch-n [[:district0x/set-active-page match]
+       {:dispatch-n [[:district0x/set-active-page match]
                      [:reinit]]}
        {:db db
         :dispatch [:district0x/set-active-page match]}))))

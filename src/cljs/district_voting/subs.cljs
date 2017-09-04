@@ -24,6 +24,11 @@
     (get-in db [:smart-contracts contract-key :address])))
 
 (reg-sub
+ :contract-name
+ (fn [db [_ contract-key]]
+   (get-in db [:smart-contracts contract-key :name])))
+
+(reg-sub
   :voting-loading?
   (fn [db [_ ] [voting-key]]
     (get-in db [:votings voting-key :loading?])))
