@@ -11,11 +11,12 @@
     [district0x.utils :as u]))
 
 (defmethod page :route.feedback/home []
-  (let [votes (subscribe [:voting/candidates-voters-dnt-total :bittrex-fee])
-        votes-total (subscribe [:voting/voters-dnt-total :bittrex-fee])
-        loading? (subscribe [:voting-loading? :bittrex-fee])
-        vote-form (subscribe [:voting-form :bittrex-fee])
-        time-remaining (subscribe [:voting-time-remaining :bittrex-fee])]
+  (let [project (reagent.core/atom :bittrex-fee)
+        votes (subscribe [:voting/candidates-voters-dnt-total] [project])
+        votes-total (subscribe [:voting/voters-dnt-total ] [project])
+        loading? (subscribe [:voting-loading?] [project])
+        vote-form (subscribe [:voting-form] [project])
+        time-remaining (subscribe [:voting-time-remaining] [project])]
     (fn []
       [paper
        {:loading? (or @loading? (:loading? @vote-form))
@@ -72,7 +73,7 @@
                 :votes @votes
                 :index i
                 :loading? @loading?
-                :voting-key :bittrex-fee
+                :voting-key @project
                 :form-key :form.bittrex-fee/vote
                 :voting-disabled? (every? zero? (vals @time-remaining))}]]))]]
        [:div {:style {:height 250}}]                        ; Only for styling purposes
