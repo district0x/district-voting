@@ -4,6 +4,7 @@
     [district-voting.components.contract-info :refer [contract-info]]
     [district-voting.components.how-to-instructions :refer [how-to-instructions]]
     [district-voting.components.voting-bar :refer [voting-bar]]
+    [district-voting.components.countdown-timer :refer [countdown]]
     [district-voting.styles :as styles]
     [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
     [markdown.core :refer [md->html]]
@@ -66,7 +67,8 @@
         sort-order (r/atom :dnt-votes)
         expanded (r/atom nil)
         sorted-proposals (subscribe [:sorted-list sort-options] [all-proposals-p sort-order])
-        limited-proposals (subscribe [:limited-list] [sorted-proposals limit])]
+        limited-proposals (subscribe [:limited-list] [sorted-proposals limit])
+        time-remaining (subscribe [:voting-time-remaining] [project])]
     (fn []
       [paper
        {:style {:min-height 600}
@@ -79,6 +81,10 @@
         [:div "The district0x project is open source and community-driven. As such, prioritization of the development of specific issues for the various districts happens according to the will of the community of token holders. To signal for the issue you would like to see worked on next, please complete the following steps:"
          [how-to-instructions]
          [:div [:strong "Note:"] " You may only vote for one issue per address at a time. No DNT are transferred when signaling, the voting mechanism simply registers your indication to your address. As such, the entire DNT balance stored at that address would be counted towards the vote. Once DNT is transferred to a new address, the district's vote total would be lowered by a corresponding amount. Your vote can be changed at any time by voting again from the same address."]
+         (if @time-remaining
+           [:div [countdown (assoc @time-remaining
+                                   :caption "Time remaining: ")]]
+           [:div [:strong "Note:"]" No date has been set for the closure of the current voting period. Stay tuned for updates!"])
          [contract-info {:contract-key @project
                          :style styles/margin-bottom-gutter-less}]]
         [:div
@@ -137,6 +143,9 @@
                :votes @votes
                :index number
                :loading? @loading?
+               :voting-disabled? (and
+                                  @time-remaining
+                                  (every? zero? (vals @time-remaining)))
                :voting-key @project}]]))]
        (when (< (count @limited-proposals) (count @sorted-proposals))
          [ui/flat-button

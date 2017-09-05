@@ -38,7 +38,8 @@
                        :dispatch [:proposals/load p]}
                       {:when :seen?
                        :events [:proposals/loaded]
-                       :dispatch [:load-voters-count p]}]}})
+                       :dispatch-n [[:load-voters-count p]
+                                    [:setup-update-now-interval]]}]}})
    "feedback" (fn [_]
                 {:dispatch-n [[:load-voters-count :bittrex-fee]
                               [:setup-update-now-interval]]})})

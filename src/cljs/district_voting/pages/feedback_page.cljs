@@ -4,6 +4,7 @@
     [district-voting.components.contract-info :refer [contract-info]]
     [district-voting.components.how-to-instructions :refer [how-to-instructions]]
     [district-voting.components.voting-bar :refer [voting-bar]]
+    [district-voting.components.countdown-timer :refer [countdown]]
     [district-voting.constants :as constants]
     [district-voting.styles :as styles]
     [district0x.components.misc :as misc :refer [row row-with-cols col center-layout paper page]]
@@ -45,16 +46,9 @@
           [:a {:href "https://district0x.slack.com/files/joe/F6JUAT8TT/Bittrex_Update"
                :target :_blank}
            "here"] "?"]
-         (let [{:keys [:seconds :minutes :hours :days]} @time-remaining]
-           [:h3
-            {:style (merge styles/full-width
-                           styles/text-center
-                           styles/margin-top-gutter-less)}
-            "remaining "
-            days " " (u/pluralize "day" days) " "
-            hours " " (u/pluralize "hour" hours) " "
-            minutes " " (u/pluralize "minute" minutes) " "
-            seconds " " (u/pluralize "second" seconds) " "])
+
+         [district-voting.components.countdown-timer :refer [countdown]]
+         [countdown @time-remaining]
          [contract-info {:contract-key :bittrex-fee}]
          (doall
            (for [[i {:keys [:title]}] constants/bittrex-fee-candidates]
@@ -75,6 +69,8 @@
                 :loading? @loading?
                 :voting-key @project
                 :form-key :form.bittrex-fee/vote
-                :voting-disabled? (every? zero? (vals @time-remaining))}]]))]]
+                :voting-disabled? (and
+                                   @time-remaining
+                                   (every? zero? (vals @time-remaining)))}]]))]]
        [:div {:style {:height 250}}]                        ; Only for styling purposes
        [bottom-logo]])))

@@ -36,10 +36,11 @@
 (reg-sub
   :voting-time-remaining
   (fn [db [_ ] [voting-key]]
-    (let [time-remaining (u/time-remaining (:now db) (get-in db [:votings voting-key :end-time]))]
-      (if (some neg? (vals time-remaining))
-        (medley/map-vals (constantly 0) time-remaining)
-        time-remaining))))
+    (if-let [t (get-in db [:votings voting-key :end-time])]
+      (when-let [time-remaining (u/time-remaining (:now db) t)]
+        (if (some neg? (vals time-remaining))
+          (medley/map-vals (constantly 0) time-remaining)
+          time-remaining)))))
 
 (reg-sub
  :voting-form
