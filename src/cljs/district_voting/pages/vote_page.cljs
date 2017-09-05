@@ -92,7 +92,14 @@
                   :margin-right 10}}
          [row
           {:end "xs"}
-          [sort-pulldown sort-order sort-options]]]
+          [col
+           [:div
+            {:style
+             {:margin-top "12px"
+              :font-size "1.3em"
+              :margin-right "20px"}}(str "Total votes: " (u/to-locale-string @votes-total 0)  " DNT")]]
+          [col
+           [sort-pulldown sort-order sort-options]]]]
         (doall
          (for [{:keys [:number
                        :title
