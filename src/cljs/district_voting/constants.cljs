@@ -34,6 +34,7 @@
                          (if-not (= "feedback" subdomain) "vote" subdomain)))
 (def routes
   ({"vote" ["/" [["proposals" :route.vote/proposals]
+                 [["issues/" :project] :route.vote/home]
                  [true :route.vote/home]]]
     "feedback" ["/" [[true :route.feedback/home]]]}
     current-subdomain))

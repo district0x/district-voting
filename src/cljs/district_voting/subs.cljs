@@ -10,7 +10,8 @@
     [re-frame.subs :as sbs]
     [district-voting.constants :as constants]
     [print.foo :refer [look]]
-    [district0x.utils :as u]))
+    [district0x.utils :as u])
+  (:require-macros [reagent.ratom :refer [reaction]]))
 
 (reg-sub
   :votings
@@ -23,6 +24,11 @@
     (get-in db [:smart-contracts contract-key :address])))
 
 (reg-sub
+ :contract-name
+ (fn [db [_ contract-key]]
+   (get-in db [:smart-contracts contract-key :name])))
+
+(reg-sub
   :voting-loading?
   (fn [db [_ voting-key]]
     (get-in db [:votings voting-key :loading?])))
@@ -30,20 +36,16 @@
 (reg-sub
   :voting-time-remaining
   (fn [db [_ voting-key]]
-    (let [time-remaining (u/time-remaining (:now db) (get-in db [:votings voting-key :end-time]))]
-      (if (some neg? (vals time-remaining))
-        (medley/map-vals (constantly 0) time-remaining)
-        time-remaining))))
+    (if-let [t (get-in db [:votings voting-key :end-time])]
+      (when-let [time-remaining (u/time-remaining (:now db) t)]
+        (if (some neg? (vals time-remaining))
+          (medley/map-vals (constantly 0) time-remaining)
+          time-remaining)))))
 
 (reg-sub
-  :form.next-district/vote
-  (fn [db]
-    (:default (:form.next-district/vote db))))
-
-(reg-sub
-  :form.bittrex-fee/vote
-  (fn [db]
-    (:default (:form.bittrex-fee/vote db))))
+ :voting-form
+ (fn [db [_ project]]
+   (get-in db [(get-in db [:voting-forms project]) :default])))
 
 (reg-sub
   :voting/voters-dnt-total
@@ -74,13 +76,13 @@
   :voting/active-address-voted?
   :<- [:district0x/active-address]
   :<- [:votings]
-  (fn [[active-address votings] [_ voting-key candidate-index]]
-    (contains? (get-in votings [voting-key :voting/candidates candidate-index :candidate/voters])
+  (fn [[active-address votings] [_ project candidate-index]]
+    (contains? (get-in votings [project :voting/candidates candidate-index :candidate/voters])
                active-address)))
 
 (reg-sub
  :sorted-list
- (fn [_ [_ sort-options] [lst sort-order]]
+ (fn [_ [_ sort-options lst sort-order]]
    (let [sorted (sort-by (get-in sort-options
                                  [sort-order :cmp-fn]) lst)]
      (if (get-in sort-options [sort-order :reverse?])
@@ -89,7 +91,7 @@
 
 (reg-sub
  :limited-list
- (fn [_ _ [lst limit]]
+ (fn [_ [_ lst limit]]
    (if (pos? limit)
      (take limit lst)
      lst)))
@@ -112,7 +114,7 @@
 (reg-sub
  :proposals/list-open-with-votes-and-reactions
  (fn [[_ project]]
-   {:lst  (sbs/subscribe [:proposals/list project])
+   {:lst   (sbs/subscribe [:proposals/list project])
     :votes (sbs/subscribe [:voting/candidates-voters-dnt-total project])})
  (fn [{:keys [lst votes]} _]
    (doall (map (fn [p]

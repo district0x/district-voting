@@ -33,4 +33,4 @@
                        "Vote")
               :disabled (or (not @can-submit?) @active-address-voted? voting-disabled?)
               :primary true
-              :on-touch-tap #(dispatch [:voting/vote voting-key form-key {:candidate/index index}])}]])]))))
+              :on-touch-tap #(dispatch [:voting/vote voting-key {:candidate/index index}])}]])]))))
