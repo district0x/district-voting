@@ -30,12 +30,12 @@
 
 (reg-sub
   :voting-loading?
-  (fn [db [_ ] [voting-key]]
+  (fn [db [_ voting-key]]
     (get-in db [:votings voting-key :loading?])))
 
 (reg-sub
   :voting-time-remaining
-  (fn [db [_ ] [voting-key]]
+  (fn [db [_ voting-key]]
     (if-let [t (get-in db [:votings voting-key :end-time])]
       (when-let [time-remaining (u/time-remaining (:now db) t)]
         (if (some neg? (vals time-remaining))
@@ -44,14 +44,14 @@
 
 (reg-sub
  :voting-form
- (fn [db _ [project]]
+ (fn [db [_ project]]
    (get-in db [(get-in db [:voting-forms project]) :default])))
 
 (reg-sub
   :voting/voters-dnt-total
   :<- [:district0x/balances]
   :<- [:votings]
-  (fn [[balances votings] [_] [voting-key]]
+  (fn [[balances votings] [_ voting-key]]
     (->> (vals (get-in votings [voting-key :voting/candidates]))
       (reduce #(set/union %1 (:candidate/voters %2)) #{})
       (select-keys balances)
@@ -63,7 +63,7 @@
   :voting/candidates-voters-dnt-total
   :<- [:district0x/balances]
   :<- [:votings]
-  (fn [[balances votings] [_] [voting-key]]
+  (fn [[balances votings] [_ voting-key]]
     (medley/map-vals (fn [{:keys [:candidate/voters]}]
                        (->> voters
                          (select-keys balances)
@@ -82,7 +82,7 @@
 
 (reg-sub
  :sorted-list
- (fn [_ [_ sort-options] [lst sort-order]]
+ (fn [_ [_ sort-options lst sort-order]]
    (let [sorted (sort-by (get-in sort-options
                                  [sort-order :cmp-fn]) lst)]
      (if (get-in sort-options [sort-order :reverse?])
@@ -91,7 +91,7 @@
 
 (reg-sub
  :limited-list
- (fn [_ _ [lst limit]]
+ (fn [_ [_ lst limit]]
    (if (pos? limit)
      (take limit lst)
      lst)))
@@ -108,15 +108,17 @@
 
 (reg-sub
  :proposals/list
- (fn [db [_] [project]]
+ (fn [db [_ project]]
    (get-in db [:votings project :voting/proposals])))
 
 (reg-sub
  :proposals/list-open-with-votes-and-reactions
- (fn [_ [project]]
-   {:lst  (sbs/subscribe [:proposals/list] [(reaction project)])
-    :votes (sbs/subscribe [:voting/candidates-voters-dnt-total] [(reaction project)])})
+ (fn [[_ project]]
+   {:lst   (sbs/subscribe [:proposals/list project])
+    :votes (sbs/subscribe [:voting/candidates-voters-dnt-total project])})
  (fn [{:keys [lst votes]} _]
+   (look lst)
+   (look votes)
    (doall (map (fn [p]
                  (-> p
                      (assoc :dnt-votes (get votes (:number p)))
