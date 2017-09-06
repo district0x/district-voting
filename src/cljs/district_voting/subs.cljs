@@ -117,8 +117,6 @@
    {:lst   (sbs/subscribe [:proposals/list project])
     :votes (sbs/subscribe [:voting/candidates-voters-dnt-total project])})
  (fn [{:keys [lst votes]} _]
-   (look lst)
-   (look votes)
    (doall (map (fn [p]
                  (-> p
                      (assoc :dnt-votes (get votes (:number p)))
