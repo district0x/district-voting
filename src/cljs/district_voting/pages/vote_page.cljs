@@ -57,106 +57,115 @@
 (defmethod page :route.vote/home []
   (let [active-page (subscribe [:district0x/active-page])
         project (reaction (keyword (get-in @active-page [:route-params :project] "next-district")))
-        votes (subscribe [:voting/candidates-voters-dnt-total] [project])
-        votes-total (subscribe [:voting/voters-dnt-total] [project])
-        loading? (subscribe [:voting-loading?] [project])
         can-submit? (subscribe [:district0x/can-submit-into-blockchain?])
-        vote-form (subscribe [:voting-form] [project])
-        all-proposals-p (subscribe [:proposals/list-open-with-votes-and-reactions] [project])
         limit (r/atom 10)
         sort-order (r/atom :dnt-votes)
-        expanded (r/atom nil)
-        sorted-proposals (subscribe [:sorted-list sort-options] [all-proposals-p sort-order])
-        limited-proposals (subscribe [:limited-list] [sorted-proposals limit])
-        time-remaining (subscribe [:voting-time-remaining] [project])]
+        expanded (r/atom nil)]
     (fn []
-      [paper
-       {:style {:min-height 600}
-        :loading? (or @loading? (:loading? @vote-form))
-        :use-loader? true}
-       [:h1 {:style (merge styles/text-center
-                           styles/margin-bottom-gutter-less)}
-        (str "What should we build next for " (name @project) "?")]
-       [row
-        [:div "The district0x project is open source and community-driven. As such, prioritization of the development of specific issues for the various districts happens according to the will of the community of token holders. To signal for the issue you would like to see worked on next, please complete the following steps:"
-         [how-to-instructions]
-         [:div [:strong "Note:"] " You may only vote for one issue per address at a time. No DNT are transferred when signaling, the voting mechanism simply registers your indication to your address. As such, the entire DNT balance stored at that address would be counted towards the vote. Once DNT is transferred to a new address, the district's vote total would be lowered by a corresponding amount. Your vote can be changed at any time by voting again from the same address."]
-         (if @time-remaining
-           [:div [countdown (assoc @time-remaining
-                                   :caption "Time remaining: ")]]
-           [:div [:strong "Note:"]" No date has been set for the closure of the current voting period. Stay tuned for updates!"])
-         [contract-info {:contract-key @project
-                         :style styles/margin-bottom-gutter-less}]]
-        [:div
-         {:style {:width "100%"
-                  :margin-right 10}}
+      (let [votes (subscribe [:voting/candidates-voters-dnt-total @project])
+            votes-total (subscribe [:voting/voters-dnt-total @project])
+            loading? (subscribe [:voting-loading? @project])
+            vote-form (subscribe [:voting-form @project])
+            all-proposals-p (subscribe [:proposals/list-open-with-votes-and-reactions @project])
+            sorted-proposals (subscribe [:sorted-list sort-options @all-proposals-p @sort-order])
+            limited-proposals (subscribe [:limited-list @sorted-proposals @limit])
+            time-remaining (subscribe [:voting-time-remaining @project])]
+        [paper
+         {:style {:min-height 600}
+          :loading? (or @loading? (:loading? @vote-form))
+          :use-loader? true}
+         [:h1 {:style (merge styles/text-center
+                             styles/margin-bottom-gutter-less)}
+          (if (= @project :next-district)
+            "What should we build next?"
+            (str "What should we build next for " (name @project) "?"))]
          [row
-          {:end "xs"}
-          [col
-           [:div
-            {:style
-             {:margin-top "12px"
-              :font-size "1.3em"
-              :margin-right "20px"}}(str "Total votes: " (u/to-locale-string @votes-total 0)  " DNT")]]
-          [col
-           [sort-pulldown sort-order sort-options]]]]
-        (doall
-         (for [{:keys [:number
-                       :title
-                       :body
-                       :html_url
-                       :dnt-votes
-                       :comments
-                       :reactions
-                       :created_at]} @limited-proposals]
-            [:div
-             {:key (str @project number)
-              :style {:margin-top styles/desktop-gutter
-                      :width "100%"}}
-             [:h2
-              {:style (:merge styles/margin-bottom-gutter-mini
-                              {:font-size "1.6em"})}
-              title]
-             ;; WARN: This is as safe as https://github.com/leizongmin/js-xss lib.
-             (when (= @expanded number )
-               [:div {:style {:overflow-x :auto}}
-                [:div {:dangerouslySetInnerHTML
-                       {:__html ((aget js/window "filterXSS") (md->html body))}}]
-                [:div {:style (merge styles/text-center
-                                     {:font-size "0.9em"
-                                      :cursor :pointer})}
-                 [:a {:href "#"
-                      :on-click (fn [e]
-                                  (.preventDefault e)
-                                  (reset! expanded nil))}
-                  "Hide description"]]])
+          (if (= @project :next-district)
+            [:div "district0x makes use of a " [link "district proposal process" "https://github.com/district0x/district-proposals"]
+             " to allow the community to determine what districts they would like to see built and deployed to the network next by the district0x team.  To signal for a district you would like to see launched, please complete the following steps:"
+             [how-to-instructions]
+             [:div "Note: You may only vote for one district per address at a time. No DNT are transferred when signaling, the voting mechanism simply registers your indication to your address. As such, the entire DNT balance stored at that address would be counted towards the vote. Once DNT is transferred to a new address, the district's vote total would be lowered by a corresponding amount. Your vote can be changed at any time by voting again from the same address."]
+             [contract-info {:contract-key :next-district
+                             :style styles/margin-bottom-gutter-less}]]
+            [:div "The district0x project is open source and community-driven. As such, prioritization of the development of specific issues for the various districts happens according to the will of the community of token holders. To signal for the issue you would like to see worked on next, please complete the following steps:"
+             [how-to-instructions]
+             [:div [:strong "Note:"] " You may only vote for one issue per address at a time. No DNT are transferred when signaling, the voting mechanism simply registers your indication to your address. As such, the entire DNT balance stored at that address would be counted towards the vote. Once DNT is transferred to a new address, the district's vote total would be lowered by a corresponding amount. Your vote can be changed at any time by voting again from the same address."]
+             (if @time-remaining
+               [:div [countdown (assoc @time-remaining
+                                       :caption "Time remaining: ")]]
+               [:div [:strong "Note:"]" No date has been set for the closure of the current voting period. Stay tuned for updates!"])
+             [contract-info {:contract-key @project
+                             :style styles/margin-bottom-gutter-less}]])
+          [:div
+           {:style {:width "100%"
+                    :margin-right 10}}
+           [row
+            {:end "xs"}
+            [col
              [:div
-              {:style styles/margin-top-gutter-less}
-              [:div "ID: " number]
-              [:div "Created: " (iso-8601->rfc822 created_at)]
-              [:div "Github upvotes: " reactions]
-              [:div "Github comments: " comments]
-              [:div [:a {:href html_url
-                         :target :_blank}
-                     "Open in Github"]]
-              [:div (if-not (= @expanded number )
-                      [:a {:href "#"
-                           :on-click (fn [e]
-                                       (.preventDefault e)
-                                       (reset! expanded number))}
-                       "Show description"])]]
-             [voting-bar
-              {:votes-total @votes-total
-               :votes @votes
-               :index number
-               :loading? @loading?
-               :voting-disabled? (and
-                                  @time-remaining
-                                  (every? zero? (vals @time-remaining)))
-               :voting-key @project}]]))]
-       (when (< (count @limited-proposals) (count @sorted-proposals))
-         [ui/flat-button
-          {:label "View all"
-           :primary true
-           :on-touch-tap #(reset! limit 0)}])
-       [bottom-logo]])))
+              {:style
+               {:margin-top "12px"
+                :font-size "1.3em"
+                :margin-right "20px"}}(str "Total votes: " (u/to-locale-string @votes-total 0)  " DNT")]]
+            [col
+             [sort-pulldown sort-order sort-options]]]]
+          (doall
+           (for [{:keys [:number
+                         :title
+                         :body
+                         :html_url
+                         :dnt-votes
+                         :comments
+                         :reactions
+                         :created_at]} @limited-proposals]
+             [:div
+              {:key (str @project number)
+               :style {:margin-top styles/desktop-gutter
+                       :width "100%"}}
+              [:h2
+               {:style (:merge styles/margin-bottom-gutter-mini
+                               {:font-size "1.6em"})}
+               title]
+              ;; WARN: This is as safe as https://github.com/leizongmin/js-xss lib.
+              (when (= @expanded number )
+                [:div {:style {:overflow-x :auto}}
+                 [:div {:dangerouslySetInnerHTML
+                        {:__html ((aget js/window "filterXSS") (md->html body))}}]
+                 [:div {:style (merge styles/text-center
+                                      {:font-size "0.9em"
+                                       :cursor :pointer})}
+                  [:a {:href "#"
+                       :on-click (fn [e]
+                                   (.preventDefault e)
+                                   (reset! expanded nil))}
+                   "Hide description"]]])
+              [:div
+               {:style styles/margin-top-gutter-less}
+               [:div "ID: " number]
+               [:div "Created: " (iso-8601->rfc822 created_at)]
+               [:div "Github upvotes: " reactions]
+               [:div "Github comments: " comments]
+               [:div [:a {:href html_url
+                          :target :_blank}
+                      "Open in Github"]]
+               [:div (if-not (= @expanded number )
+                       [:a {:href "#"
+                            :on-click (fn [e]
+                                        (.preventDefault e)
+                                        (reset! expanded number))}
+                        "Show description"])]]
+              [voting-bar
+               {:votes-total @votes-total
+                :votes @votes
+                :index number
+                :loading? @loading?
+                :voting-disabled? (and
+                                   @time-remaining
+                                   (every? zero? (vals @time-remaining)))
+                :voting-key @project}]]))]
+         (when (< (count @limited-proposals) (count @sorted-proposals))
+           [ui/flat-button
+            {:label "View all"
+             :primary true
+             :on-touch-tap #(reset! limit 0)}])
+         [bottom-logo]]))))
