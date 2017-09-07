@@ -35,7 +35,7 @@
 
 (reg-sub
   :voting-time-remaining
-  (fn [db [_ ] [voting-key]]
+  (fn [db [_ voting-key]]
     (if-let [t (get-in db [:votings voting-key :end-time])]
       (when-let [time-remaining (u/time-remaining (:now db) t)]
         (if (some neg? (vals time-remaining))
@@ -44,7 +44,7 @@
 
 (reg-sub
  :voting-form
- (fn [db _ [project]]
+ (fn [db [_ project]]
    (get-in db [(get-in db [:voting-forms project]) :default])))
 
 (reg-sub
@@ -82,7 +82,7 @@
 
 (reg-sub
  :sorted-list
- (fn [_ [_ sort-options] [lst sort-order]]
+ (fn [_ [_ sort-options lst sort-order]]
    (let [sorted (sort-by (get-in sort-options
                                  [sort-order :cmp-fn]) lst)]
      (if (get-in sort-options [sort-order :reverse?])
@@ -91,7 +91,7 @@
 
 (reg-sub
  :limited-list
- (fn [_ _ [lst limit]]
+ (fn [_ [_ lst limit]]
    (if (pos? limit)
      (take limit lst)
      lst)))
@@ -113,9 +113,9 @@
 
 (reg-sub
  :proposals/list-open-with-votes-and-reactions
- (fn [_ [project]]
-   {:lst  (sbs/subscribe [:proposals/list] [(reaction project)])
-    :votes (sbs/subscribe [:voting/candidates-voters-dnt-total] [(reaction project)])})
+ (fn [[_ project]]
+   {:lst   (sbs/subscribe [:proposals/list project])
+    :votes (sbs/subscribe [:voting/candidates-voters-dnt-total project])})
  (fn [{:keys [lst votes]} _]
    (doall (map (fn [p]
                  (-> p
