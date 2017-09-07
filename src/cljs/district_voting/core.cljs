@@ -26,6 +26,7 @@
   ;(.clear js/console)
   (r/render [main-panel] (.getElementById js/document "app")))
 
+
 (defn ^:export init []
   (s/check-asserts goog.DEBUG)
   (google-analytics-fx/set-enabled! (not goog.DEBUG))
@@ -39,7 +40,7 @@
                     :dispatch-interval {:dispatch [:load-voters-dnt-balances]
                                         :ms 300000
                                         :db-path [:load-voters-dnt-balances-interval]}}}])
-  (set! (.-onhashchange js/window)
-        #(dispatch [:district0x/set-active-page (u/match-current-location constants/routes)]))
+  (aset js/window "onhashchange"
+        #(dispatch [:set-active-page (u/match-current-location constants/routes)]))
   (mount-root))
 

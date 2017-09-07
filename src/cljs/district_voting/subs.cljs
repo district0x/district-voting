@@ -10,7 +10,8 @@
     [re-frame.subs :as sbs]
     [district-voting.constants :as constants]
     [print.foo :refer [look]]
-    [district0x.utils :as u]))
+    [district0x.utils :as u])
+  (:require-macros [reagent.ratom :refer [reaction]]))
 
 (reg-sub
   :votings
@@ -23,33 +24,34 @@
     (get-in db [:smart-contracts contract-key :address])))
 
 (reg-sub
+ :contract-name
+ (fn [db [_ contract-key]]
+   (get-in db [:smart-contracts contract-key :name])))
+
+(reg-sub
   :voting-loading?
-  (fn [db [_ voting-key]]
+  (fn [db [_ ] [voting-key]]
     (get-in db [:votings voting-key :loading?])))
 
 (reg-sub
   :voting-time-remaining
-  (fn [db [_ voting-key]]
-    (let [time-remaining (u/time-remaining (:now db) (get-in db [:votings voting-key :end-time]))]
-      (if (some neg? (vals time-remaining))
-        (medley/map-vals (constantly 0) time-remaining)
-        time-remaining))))
+  (fn [db [_ ] [voting-key]]
+    (if-let [t (get-in db [:votings voting-key :end-time])]
+      (when-let [time-remaining (u/time-remaining (:now db) t)]
+        (if (some neg? (vals time-remaining))
+          (medley/map-vals (constantly 0) time-remaining)
+          time-remaining)))))
 
 (reg-sub
-  :form.next-district/vote
-  (fn [db]
-    (:default (:form.next-district/vote db))))
-
-(reg-sub
-  :form.bittrex-fee/vote
-  (fn [db]
-    (:default (:form.bittrex-fee/vote db))))
+ :voting-form
+ (fn [db _ [project]]
+   (get-in db [(get-in db [:voting-forms project]) :default])))
 
 (reg-sub
   :voting/voters-dnt-total
   :<- [:district0x/balances]
   :<- [:votings]
-  (fn [[balances votings] [_ voting-key]]
+  (fn [[balances votings] [_] [voting-key]]
     (->> (vals (get-in votings [voting-key :voting/candidates]))
       (reduce #(set/union %1 (:candidate/voters %2)) #{})
       (select-keys balances)
@@ -61,7 +63,7 @@
   :voting/candidates-voters-dnt-total
   :<- [:district0x/balances]
   :<- [:votings]
-  (fn [[balances votings] [_ voting-key]]
+  (fn [[balances votings] [_] [voting-key]]
     (medley/map-vals (fn [{:keys [:candidate/voters]}]
                        (->> voters
                          (select-keys balances)
@@ -74,8 +76,8 @@
   :voting/active-address-voted?
   :<- [:district0x/active-address]
   :<- [:votings]
-  (fn [[active-address votings] [_ voting-key candidate-index]]
-    (contains? (get-in votings [voting-key :voting/candidates candidate-index :candidate/voters])
+  (fn [[active-address votings] [_ project candidate-index]]
+    (contains? (get-in votings [project :voting/candidates candidate-index :candidate/voters])
                active-address)))
 
 (reg-sub
@@ -106,14 +108,14 @@
 
 (reg-sub
  :proposals/list
- (fn [db [_ project]]
+ (fn [db [_] [project]]
    (get-in db [:votings project :voting/proposals])))
 
 (reg-sub
  :proposals/list-open-with-votes-and-reactions
- (fn [[_ project]]
-   {:lst  (sbs/subscribe [:proposals/list project])
-    :votes (sbs/subscribe [:voting/candidates-voters-dnt-total project])})
+ (fn [_ [project]]
+   {:lst  (sbs/subscribe [:proposals/list] [(reaction project)])
+    :votes (sbs/subscribe [:voting/candidates-voters-dnt-total] [(reaction project)])})
  (fn [{:keys [lst votes]} _]
    (doall (map (fn [p]
                  (-> p
