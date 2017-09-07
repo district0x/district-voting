@@ -30,7 +30,7 @@
 
 (reg-sub
   :voting-loading?
-  (fn [db [_ ] [voting-key]]
+  (fn [db [_ voting-key]]
     (get-in db [:votings voting-key :loading?])))
 
 (reg-sub
@@ -51,7 +51,7 @@
   :voting/voters-dnt-total
   :<- [:district0x/balances]
   :<- [:votings]
-  (fn [[balances votings] [_] [voting-key]]
+  (fn [[balances votings] [_ voting-key]]
     (->> (vals (get-in votings [voting-key :voting/candidates]))
       (reduce #(set/union %1 (:candidate/voters %2)) #{})
       (select-keys balances)
@@ -63,7 +63,7 @@
   :voting/candidates-voters-dnt-total
   :<- [:district0x/balances]
   :<- [:votings]
-  (fn [[balances votings] [_] [voting-key]]
+  (fn [[balances votings] [_ voting-key]]
     (medley/map-vals (fn [{:keys [:candidate/voters]}]
                        (->> voters
                          (select-keys balances)
@@ -108,7 +108,7 @@
 
 (reg-sub
  :proposals/list
- (fn [db [_] [project]]
+ (fn [db [_ project]]
    (get-in db [:votings project :voting/proposals])))
 
 (reg-sub
