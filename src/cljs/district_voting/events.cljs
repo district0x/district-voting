@@ -24,6 +24,7 @@
    [medley.core :as medley]
    [print.foo :include-macros true]
    [district-voting.db :refer [setup-candidates]]
+   [district-voting.web3-fx :as web3-fx]
    [print.foo :refer [look tap]]
    [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx inject-cofx path trim-v after debug reg-fx console dispatch]]))
 
@@ -44,15 +45,38 @@
                 {:dispatch-n [[:load-voters-count :bittrex-fee]
                               [:setup-update-now-interval]]})})
 
+(def d0x-init-event
+  [:district0x/initialize
+   {:default-db district-voting.db/default-db
+    :effects
+    {:async-flow {:first-dispatch [:district0x/load-smart-contracts {:version "1.0.0"}]
+                  :rules [{:when :seen?
+                           :events [:district0x/smart-contracts-loaded :district0x/my-addresses-loaded]
+                           :dispatch-n [[:initialize]]}]}
+     :dispatch-interval {:dispatch [:load-voters-dnt-balances]
+                         :ms 300000
+                         :db-path [:load-voters-dnt-balances-interval]}}}])
+
 (reg-event-fx
-  :initialize
-  interceptors
-  (fn [{:keys [:db]}]
-    (let [project (keyword (get-in db [:active-page :route-params :project] :next-district))]
-      (merge
-       {:dispatch [:watch-my-dnt-balances]}
-       ((subdomain->initial-events constants/current-subdomain)
-        project)))))
+ :initialize-web3
+ []
+ (fn [{:keys [:db]} _]
+   {:db district-voting.db/default-db
+    ::web3-fx/authorize-ethereum-provider
+    {:on-accept d0x-init-event
+     :on-reject d0x-init-event
+     :on-error d0x-init-event
+     :on-legacy d0x-init-event}}))
+
+(reg-event-fx
+ :initialize
+ interceptors
+ (fn [{:keys [:db]}]
+   (let [project (keyword (get-in db [:active-page :route-params :project] :next-district))]
+     (merge
+      {:dispatch [:watch-my-dnt-balances]}
+      ((subdomain->initial-events constants/current-subdomain)
+       project)))))
 
 (reg-event-fx
   :setup-update-now-interval
