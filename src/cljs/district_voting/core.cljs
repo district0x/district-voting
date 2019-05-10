@@ -24,11 +24,13 @@
   (s/check-asserts goog.DEBUG)
   (google-analytics-fx/set-enabled! (not goog.DEBUG))
   (clear-subscription-cache!)
-                                        ;(.clear js/console)
+  ;;(.clear js/console)
   (r/render [main-panel] (.getElementById js/document "app")))
 
 (defn ^:export init []
   (s/check-asserts goog.DEBUG)
+  (when ^boolean goog.DEBUG
+    (enable-console-print!))
   (google-analytics-fx/set-enabled! (not goog.DEBUG))
   (dispatch-sync [:initialize-web3])
   (aset js/window "onhashchange"

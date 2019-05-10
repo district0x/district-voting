@@ -18,6 +18,7 @@
 
   :plugins [[lein-auto "0.1.2"]
             [lein-cljsbuild "1.1.4"]
+            [lein-solc "1.0.11"]
             [lein-shell "0.5.0"]
             [deraen/lein-less4j "0.5.0"]]
 
@@ -25,14 +26,19 @@
 
   :source-paths ["dev"]
 
-  :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
+  :clean-targets ^{:protect false} ["resources/public/js/compiled" "resources/public/css" "resources/public/contracts/build" "target"]
 
   :figwheel {:server-port 6372}
 
-  :auto {"compile-solidity" {:file-pattern #"\.(sol)$"
-                             :paths ["resources/public/contracts/src"]}}
-
-  :aliases {"compile-solidity" ["shell" "./compile-solidity.sh"]}
+  :solc {:src-path "contracts/"
+         :build-path "resources/public/contracts/build/"
+         :byte-count true
+         :solc-err-only true
+         :verbose false
+         :abi? true
+         :bin? true
+         :truffle-artifacts? false
+         :contracts :all}
 
   :less {:source-paths ["resources/public/less"]
          :target-path "resources/public/css"
@@ -56,6 +62,7 @@
                                                :output-to "resources/public/js/compiled/app.js"
                                                :output-dir "resources/public/js/compiled/out"
                                                :asset-path "js/compiled/out"
+                                               :optimizations :none
                                                :source-map-timestamp true
                                                :preloads [print.foo.preloads.devtools]
                                                :closure-defines {goog.DEBUG true}
@@ -67,6 +74,4 @@
                                                :optimizations :advanced
                                                :closure-defines {goog.DEBUG false}
                                                :pretty-print false
-                                               :pseudo-names false}}]}}}
-
-  )
+                                               :pseudo-names false}}]}}})
