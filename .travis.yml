@@ -1,0 +1,26 @@
+language: clojure
+script: echo "JUST DEPLOYING"
+notifications:
+  email:
+  recipients:
+  - juan@district0x.io
+  slack:
+    on_success: always
+    on_failure: always
+    rooms:
+    - district0x:53vhalUfg0MitsQwzjP5PWdd#travis-ci
+before_install:
+- sudo wget --no-check-certificate -P /bin https://github.com/ethereum/solidity/releases/download/v0.4.24/solc-static-linux
+- sudo chmod a+x /bin/solc-static-linux
+- sudo ln -s /bin/solc-static-linux /usr/bin/solc
+env:
+  global:
+  - secure: YArVsGctmPk22UQ1MW8MyEOTSNahiIaB99AZ9qWrfh5HnBRcHnZYT8SjuerjkpYqa8NYep8n/A8Mio6Hp6S/kxf53D1TCYzwaQF31haSjaJGf1B2+Ld+lldfI/v23ICeroF9nfjerarREZBgtRr4pBDMMAfIHTL39KLSEwhUJrMBJrerPBk8Q6nhcbBY6leg2D+TXCzKyFcTZowjvbBxO/igoFX9CO3DkHZfcNkKOU/nJoLo7QSElgZ/fSH9TxDlOuDZdNIGD0rcLhc0OoKsrIZJEYlvZp/zgVwufYKpE87b0HF6x6Xf9kWfR2mAYXUxdO9rjdGOw6tTnZQ+5bGbBbQEGtkSAJsdfp7Mna6a2VtpbxcnVjq6dJOKKizu1zeQGdVbiYspffGG0rST/iUSjzkX0iQdT2Mt9jLjFuVez5DAGuvzdm+EC1uJ0/lnQQtQ0wlVMirnAND2i4wZQNMAiXeRY9ovWKNaPu2iLafq7K9FNN2Epjao410WYVp3RGEU69ndTs28eYMk8chxNckSk+TXXC7PRBbpyR1M1Negmy7DRNIq/wrZlADKpupCP45d2cZQ5oB8b4+BUp0lbG7y4imtryYBRoCv6bxTd2zln+zyVftDw+tZXlEfiSGHI72539Akhzu2JWZBWQ1SIf8jAPk04PjCiO0+ZAr25OosowQ=
+  - secure: IbX48/8cwjxZ2975ujM68kKLwnFoDFh+mZBKfeJ98pH+FdjGaxmX0Q+8pf+xHKunhARaKmGc5pzCqIXo0U6y/Wpeo7HbKQM09KbhWwqAHuQVFRz5xTSV/xSSGerpsCia/ltr4/+f7sRk+7xDVzC9wQHYo9q2+/k4GOxRaNJIByFNcdngATsxLyo/wGS3hB2n6ZEmlKRW/KSH5MiRD783TO5RUNIrLLRr04FeWv7cvPEnYMqii7HDxq64fy0qDg4iirXepyhstz+QCv6VLaom4YgOQbjgVXA6ItDxcnZhZN+Ad7BmTl/HKR+GhBamBQQUhlNh+35ZcxmWtJnaZSM9l7AGCdGjZXolFjvxF497I84ZlpuBNqhjml5iSxXYGowORGsKR3BPHlxtNivNabdkua/HCSB65ch3lfjyME7lynvct/2rKjMStqkWmRvDu4MhWLXdCD8bu2ODkWYtrJxreWw3zbwEKMyFX68WpwR978PgcuS3FWvNdQYyUsgtOUD1EhuLY5dKPbpuu6nA0OE30LLK5DJFsobpgqFe/SbXVaQ4/cUQCFwU+ElnbYhmFeYTHyHPiAvbHc7wAYaoh0tnC7rpwUVyL20PH9+Dx63+WkNFx5Hq0kbcdUEcQkphIX8/8o36agPykCTpfmNMKJ4atdpgLtXxEoK42LpDMO2nuGo=
+services:
+- docker
+deploy:
+- provider: script
+  script: bash docker-push.sh prod
+  on:
+    branch: production

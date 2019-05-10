@@ -12,8 +12,9 @@ pom.xml.asc
 /.idea/
 /district-voting.iml
 /district-voting-1.iml
-/resources/public/contracts/build/*.bin
+/resources/public/contracts/build/
 /node_modules/
 /resources/public/js/compiled/
+resources/public/contracts/build
+/resources/public/css/
 /figwheel_server.log
-!/resources/public/contracts/build/District0xNetworkToken.bin

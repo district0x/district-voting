@@ -1,5 +1,7 @@
 # District Voting
 
+[![Build Status](https://travis-ci.org/district0x/district-voting.svg?branch=master)](https://travis-ci.org/district0x/district-voting)
+
 https://vote.district0x.io
 
 [district0x](https://district0x.io) makes use of a [district proposal process](https://github.com/district0x/district-proposals) to allow the community to determine what districts they would like to see built and deployed to the network next by the district0x team. To signal for a district you would like to see launched, please complete the following steps:
